@@ -63,7 +63,7 @@ export default function LoginScreen() {
               { color: colors.textMuted, marginTop: 16, textAlign: 'center', lineHeight: 18 },
             ]}
           >
-            Secure authentication powered by WorkOS AuthKit.{'\n'}
+            Secure authentication with your MeroAuto account.{'\n'}
             Sign in or create an account automatically.
           </Text>
         </View>

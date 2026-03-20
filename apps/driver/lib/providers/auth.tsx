@@ -187,7 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signup = useCallback(async () => {
-    // WorkOS AuthKit handles both login and signup in the same flow
+    // Same OAuth flow handles both login and signup
     return login();
   }, [login]);
 
