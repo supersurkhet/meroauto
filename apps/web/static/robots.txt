@@ -1,3 +1,6 @@
-# allow crawling everything by default
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /_app/
+Disallow: /api/
+
+Sitemap: https://meroauto.com/sitemap.xml

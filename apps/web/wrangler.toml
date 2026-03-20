@@ -1,0 +1,18 @@
+name = "meroauto-web"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Production
+[env.production]
+name = "meroauto-web"
+routes = [
+  { pattern = "meroauto.com", custom_domain = true },
+  { pattern = "www.meroauto.com", custom_domain = true }
+]
+
+# Preview / staging
+[env.preview]
+name = "meroauto-web-preview"
+
+[site]
+bucket = ".svelte-kit/cloudflare"
