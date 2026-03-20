@@ -11,6 +11,7 @@ export default {
     pricing: "Pricing",
     qrCodes: "QR Codes",
     zones: "Zones",
+    payments: "Payments",
     settings: "Settings",
   },
   dashboard: {

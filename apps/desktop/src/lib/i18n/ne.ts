@@ -11,6 +11,7 @@ const ne = {
     pricing: "मूल्य निर्धारण",
     qrCodes: "QR कोडहरू",
     zones: "क्षेत्रहरू",
+    payments: "भुक्तानी",
     settings: "सेटिङ्स",
   },
   dashboard: {

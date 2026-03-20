@@ -143,6 +143,39 @@ export interface DriverUtilization {
   earnings: number;
 }
 
+export interface Payment {
+  _id: string;
+  rideId: string;
+  riderId: string;
+  driverId: string;
+  amount: number;
+  method: "cash" | "khalti" | "esewa" | "fonepay";
+  status: "pending" | "completed" | "failed" | "refunded";
+  transactionId?: string;
+  createdAt: number;
+  completedAt?: number;
+}
+
+export interface AdminUser {
+  _id: string;
+  name: string;
+  email: string;
+  role: "rider" | "driver" | "admin";
+  phone?: string;
+  avatarUrl?: string;
+  preferredLanguage?: "en" | "ne";
+  createdAt?: number;
+}
+
+export interface FareEstimate {
+  fare: number;
+  distance: number;
+  estimatedDuration: number;
+  surgeMultiplier: number;
+  zone: string | null;
+  breakdown: { baseFare: number; distanceCharge: number; timeCharge: number; surgeCharge: number };
+}
+
 // ── Helpers ─────────────────────────────────────────────────────────
 
 const now = Date.now();
@@ -314,3 +347,29 @@ export const mockDriverUtilization: DriverUtilization[] = mockDrivers.map((d) =>
   rating: d.rating,
   earnings: d.totalEarnings,
 }));
+
+export const mockPayments: Payment[] = mockRides
+  .filter((r) => r.status === "completed" || r.status === "rated")
+  .map((r, i) => ({
+    _id: `pay${i}`,
+    rideId: r._id,
+    riderId: r.riderId,
+    driverId: r.driverId,
+    amount: r.finalFare ?? r.fare,
+    method: (r.paymentMethod ?? "cash") as Payment["method"],
+    status: (i % 20 === 0 ? "refunded" : i % 15 === 0 ? "failed" : "completed") as Payment["status"],
+    transactionId: r.paymentMethod !== "cash" ? `TXN-${rnd(100000, 999999)}` : undefined,
+    createdAt: r.completedAt ?? r.createdAt,
+    completedAt: r.completedAt,
+  }));
+
+export const mockUsers: AdminUser[] = [
+  { _id: "u_admin", name: "Admin User", email: "admin@meroauto.com", role: "admin" },
+  ...mockDrivers.map((d) => ({ _id: d.userId, name: d.name ?? "Driver", email: d.email ?? "", role: "driver" as const, phone: d.phone })),
+  ...Array.from({ length: 8 }, (_, i) => ({
+    _id: `rd${i}`,
+    name: ["Anil Sharma", "Bindu Thapa", "Chetan KC", "Durga Prasad", "Ekta Rai", "Farhan Ali", "Ganga Maya", "Hari Om"][i],
+    email: `rider${i}@email.com`,
+    role: "rider" as const,
+  })),
+];
