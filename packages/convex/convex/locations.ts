@@ -203,6 +203,61 @@ export const subscribeActiveRides = query({
   },
 });
 
+/** Get count of online drivers — lightweight query for dashboard */
+export const getOnlineDriverCount = query({
+  args: {},
+  handler: async (ctx) => {
+    const onlineDrivers = await ctx.db
+      .query("drivers")
+      .withIndex("by_isOnline", (q) => q.eq("isOnline", true))
+      .collect();
+    return onlineDrivers.length;
+  },
+});
+
+/** Get driver location history — for admin tracking/replay */
+export const getDriverLocationHistory = query({
+  args: {
+    driverId: v.id("drivers"),
+    since: v.number(),
+  },
+  handler: async (ctx, { driverId, since }) => {
+    // Since driverLocations only stores latest, we query rides for route data
+    const rides = await ctx.db
+      .query("rides")
+      .withIndex("by_driverId", (q) => q.eq("driverId", driverId))
+      .filter((q) => q.gte(q.field("createdAt"), since))
+      .collect();
+
+    // Get current location
+    const currentLoc = await ctx.db
+      .query("driverLocations")
+      .withIndex("by_driverId", (q) => q.eq("driverId", driverId))
+      .unique();
+
+    return {
+      currentLocation: currentLoc
+        ? {
+            latitude: currentLoc.latitude,
+            longitude: currentLoc.longitude,
+            heading: currentLoc.heading,
+            updatedAt: currentLoc.updatedAt,
+          }
+        : null,
+      recentRides: rides.map((r) => ({
+        rideId: r._id,
+        status: r.status,
+        pickupLatitude: r.pickupLatitude,
+        pickupLongitude: r.pickupLongitude,
+        dropoffLatitude: r.dropoffLatitude,
+        dropoffLongitude: r.dropoffLongitude,
+        createdAt: r.createdAt,
+        completedAt: r.completedAt,
+      })),
+    };
+  },
+});
+
 /** Remove driver location (when going offline) */
 export const removeDriverLocation = mutation({
   args: { driverId: v.id("drivers") },
