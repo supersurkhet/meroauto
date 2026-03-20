@@ -52,7 +52,17 @@ export const matchDriver = internalMutation({
     // Get all driver locations
     const allLocations = await ctx.db.query("driverLocations").collect();
 
-    let bestDriver: { driverId: (typeof allLocations)[0]["driverId"]; distance: number } | null = null;
+    // Today's start for load balancing
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayMs = todayStart.getTime();
+
+    type Candidate = {
+      driverId: (typeof allLocations)[0]["driverId"];
+      distance: number;
+      todayRides: number;
+    };
+    const candidates: Candidate[] = [];
 
     for (const loc of allLocations) {
       const driver = await ctx.db.get(loc.driverId);
@@ -88,10 +98,34 @@ export const matchDriver = internalMutation({
         loc.longitude,
       );
 
-      if (dist <= radius && (!bestDriver || dist < bestDriver.distance)) {
-        bestDriver = { driverId: loc.driverId, distance: dist };
+      if (dist <= radius) {
+        // Count today's completed rides for load balancing
+        const todayRides = await ctx.db
+          .query("rides")
+          .withIndex("by_driverId", (q) => q.eq("driverId", loc.driverId))
+          .filter((q) =>
+            q.and(
+              q.eq(q.field("status"), "completed"),
+              q.gte(q.field("createdAt"), todayMs),
+            ),
+          )
+          .collect();
+
+        candidates.push({
+          driverId: loc.driverId,
+          distance: dist,
+          todayRides: todayRides.length,
+        });
       }
     }
+
+    // Sort by: fewer rides today first, then by distance (load balancing)
+    candidates.sort((a, b) => {
+      if (a.todayRides !== b.todayRides) return a.todayRides - b.todayRides;
+      return a.distance - b.distance;
+    });
+
+    const bestDriver = candidates[0] ?? null;
 
     if (bestDriver) {
       // Found a driver — match them
