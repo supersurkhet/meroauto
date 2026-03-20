@@ -395,4 +395,63 @@ http.route({
   }),
 });
 
+// ── WorkOS Token Refresh ────────────────────────────────────────────
+// Mobile app sends refresh token, we exchange it for new access token
+
+http.route({
+  path: "/auth/refresh",
+  method: "POST",
+  handler: httpAction(async (_ctx, request) => {
+    try {
+      const body = await request.json();
+      const { refreshToken, clientId } = body;
+
+      if (!refreshToken) {
+        return jsonResponse({ error: "Missing refresh token" }, 400);
+      }
+
+      const apiKey = process.env.WORKOS_API_KEY;
+      const workosClientId = clientId ?? process.env.WORKOS_CLIENT_ID;
+      if (!apiKey || !workosClientId) {
+        return jsonResponse({ error: "WorkOS not configured" }, 500);
+      }
+
+      // Exchange refresh token for new access token via WorkOS API
+      const response = await fetch(
+        "https://api.workos.com/user_management/authenticate",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            client_id: workosClientId,
+            grant_type: "refresh_token",
+            refresh_token: refreshToken,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const error = await response.text();
+        return jsonResponse(
+          { error: `Token refresh failed: ${response.status}` },
+          401,
+        );
+      }
+
+      const data = await response.json();
+
+      return jsonResponse({
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+        expiresIn: data.expires_in ?? 3600,
+      });
+    } catch (e: any) {
+      return jsonResponse({ error: e.message }, 500);
+    }
+  }),
+});
+
 export default http;
