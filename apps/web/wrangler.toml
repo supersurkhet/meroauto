@@ -1,18 +1,4 @@
 name = "meroauto-web"
+pages_build_output_dir = ".svelte-kit/cloudflare"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
-
-# The Cloudflare adapter outputs to .svelte-kit/cloudflare
-# with _worker.js as the entry point
-
-# Production
-[env.production]
-name = "meroauto-web"
-routes = [
-  { pattern = "meroauto.com", custom_domain = true },
-  { pattern = "www.meroauto.com", custom_domain = true }
-]
-
-# Preview / staging
-[env.preview]
-name = "meroauto-web-preview"
