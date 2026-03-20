@@ -1,6 +1,10 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 
+function generateOtp(): string {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+}
+
 /** Driver accepts a matched ride request — creates a ride record */
 export const acceptRideRequest = mutation({
   args: { requestId: v.id("rideRequests") },
@@ -22,6 +26,8 @@ export const acceptRideRequest = mutation({
     if (!vehicle) throw new Error("No active vehicle for driver");
 
     const now = Date.now();
+    const otp = generateOtp();
+
     const rideId = await ctx.db.insert("rides", {
       requestId,
       riderId: request.riderId,
@@ -34,6 +40,7 @@ export const acceptRideRequest = mutation({
       dropoffLongitude: request.dropoffLongitude,
       dropoffAddress: request.dropoffAddress,
       status: "driver_arriving",
+      otp,
       fare: request.estimatedFare,
       distance: request.estimatedDistance,
       isPooling: request.isPooling,
@@ -43,7 +50,7 @@ export const acceptRideRequest = mutation({
     // Update request status
     await ctx.db.patch(requestId, { status: "accepted" });
 
-    return rideId;
+    return { rideId, otp };
   },
 });
 
@@ -59,7 +66,27 @@ export const driverArrived = mutation({
   },
 });
 
-/** Start the ride (after OTP verification) */
+/** Verify OTP and start the ride */
+export const verifyOtp = mutation({
+  args: {
+    rideId: v.id("rides"),
+    otp: v.string(),
+  },
+  handler: async (ctx, { rideId, otp }) => {
+    const ride = await ctx.db.get(rideId);
+    if (!ride) throw new Error("Ride not found");
+    if (ride.status !== "driver_arrived") throw new Error("Driver hasn't arrived yet");
+    if (ride.otp !== otp) throw new Error("Invalid OTP");
+
+    await ctx.db.patch(rideId, {
+      status: "in_progress",
+      startedAt: Date.now(),
+    });
+    return rideId;
+  },
+});
+
+/** Start the ride (without OTP — for backward compat) */
 export const startRide = mutation({
   args: { rideId: v.id("rides") },
   handler: async (ctx, { rideId }) => {

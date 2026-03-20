@@ -57,6 +57,13 @@ export const createRideRequest = mutation({
       radiusIndex: 0,
     });
 
+    // Schedule auto-expiry
+    await ctx.scheduler.runAfter(
+      RIDE_REQUEST_EXPIRY_MS,
+      internal.rideRequests.autoExpireRequest,
+      { requestId },
+    );
+
     return requestId;
   },
 });
@@ -89,6 +96,26 @@ export const expireRideRequest = internalMutation({
     const request = await ctx.db.get(requestId);
     if (!request || request.status !== "pending") return;
     await ctx.db.patch(requestId, { status: "expired" });
+  },
+});
+
+/** Scheduled auto-expire — runs after RIDE_REQUEST_EXPIRY_MS */
+export const autoExpireRequest = internalMutation({
+  args: { requestId: v.id("rideRequests") },
+  handler: async (ctx, { requestId }) => {
+    const request = await ctx.db.get(requestId);
+    if (!request) return;
+    // Only expire if still pending or matched (not accepted/cancelled)
+    if (request.status === "pending" || request.status === "matched") {
+      // Release matched driver if any
+      if (request.matchedDriverId) {
+        const driver = await ctx.db.get(request.matchedDriverId);
+        if (driver && !driver.isSuspended) {
+          // Don't reset isOnline — driver stays online, just freed up
+        }
+      }
+      await ctx.db.patch(requestId, { status: "expired" });
+    }
   },
 });
 

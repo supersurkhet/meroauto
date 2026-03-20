@@ -104,6 +104,7 @@ export default defineSchema({
       v.literal("completed"),
       v.literal("cancelled")
     ),
+    otp: v.optional(v.string()),
     fare: v.number(),
     distance: v.number(),
     duration: v.optional(v.number()),
@@ -112,6 +113,7 @@ export default defineSchema({
     cancelledAt: v.optional(v.number()),
     cancelReason: v.optional(v.string()),
     isPooling: v.boolean(),
+    isQrRide: v.optional(v.boolean()),
     createdAt: v.number(),
   })
     .index("by_riderId", ["riderId"])
@@ -185,4 +187,14 @@ export default defineSchema({
     isActive: v.boolean(),
     createdAt: v.number(),
   }).index("by_name", ["name"]),
+
+  pushTokens: defineTable({
+    userId: v.string(),
+    token: v.string(),
+    platform: v.union(v.literal("ios"), v.literal("android"), v.literal("web")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_token", ["token"]),
 });
