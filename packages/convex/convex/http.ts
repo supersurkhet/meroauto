@@ -204,4 +204,195 @@ http.route({
   }),
 });
 
+// ── Payment Initiation (called by mobile app) ──────────────────────
+// Mobile app calls these to get a paymentUrl to open in browser.
+// Backend uses @nabwin/paisa to generate signed payment URLs.
+
+http.route({
+  path: "/api/payments/khalti/initiate",
+  method: "POST",
+  handler: httpAction(async (_ctx, request) => {
+    try {
+      const body = await request.json();
+      const { amount, rideId, returnUrl, riderName, riderEmail, riderPhone } = body;
+
+      const secretKey = process.env.KHALTI_SECRET_KEY;
+      if (!secretKey) return jsonResponse({ error: "Khalti not configured" }, 500);
+
+      const { KhaltiClient } = await import("@nabwin/paisa");
+      const client = new KhaltiClient({
+        secretKey,
+        environment: (process.env.PAYMENT_ENV ?? "sandbox") as "sandbox" | "production",
+        returnUrl: returnUrl ?? "https://meroauto.com/payment/callback",
+        websiteUrl: "https://meroauto.com",
+      });
+
+      const response = await client.initiatePayment({
+        amount,
+        purchaseOrderId: `ride_${rideId}`,
+        purchaseOrderName: `MeroAuto Ride`,
+        returnUrl: returnUrl ?? "https://meroauto.com/payment/callback",
+        customer: riderName ? { name: riderName, email: riderEmail ?? "", phone: riderPhone ?? "" } : undefined,
+      });
+
+      return jsonResponse({
+        paymentUrl: response.paymentUrl,
+        transactionId: response.pidx,
+        expiresAt: response.expiresAt,
+      });
+    } catch (e: any) {
+      return jsonResponse({ error: e.message }, 500);
+    }
+  }),
+});
+
+http.route({
+  path: "/api/payments/esewa/initiate",
+  method: "POST",
+  handler: httpAction(async (_ctx, request) => {
+    try {
+      const body = await request.json();
+      const { amount, rideId, returnUrl } = body;
+
+      const merchantCode = process.env.ESEWA_MERCHANT_CODE ?? "EPAYTEST";
+      const secretKey = process.env.ESEWA_SECRET_KEY;
+      if (!secretKey) return jsonResponse({ error: "eSewa not configured" }, 500);
+
+      const { EsewaClient } = await import("@nabwin/paisa");
+      const client = new EsewaClient({
+        merchantCode,
+        secretKey,
+        environment: (process.env.PAYMENT_ENV ?? "sandbox") as "sandbox" | "production",
+        successUrl: returnUrl ?? "https://meroauto.com/payment/callback",
+        failureUrl: returnUrl ?? "https://meroauto.com/payment/callback",
+      });
+
+      const response = await client.initiatePayment({
+        amount,
+        transactionId: `ride_${rideId}_${Date.now()}`,
+        successUrl: returnUrl ?? "https://meroauto.com/payment/callback",
+        failureUrl: returnUrl ?? "https://meroauto.com/payment/callback",
+      });
+
+      return jsonResponse({
+        paymentUrl: response.paymentUrl,
+        transactionId: response.transactionId,
+        totalAmount: response.totalAmount,
+      });
+    } catch (e: any) {
+      return jsonResponse({ error: e.message }, 500);
+    }
+  }),
+});
+
+http.route({
+  path: "/api/payments/fonepay/initiate",
+  method: "POST",
+  handler: httpAction(async (_ctx, request) => {
+    try {
+      const body = await request.json();
+      const { amount, rideId, returnUrl } = body;
+
+      // Fonepay requires server-side form generation
+      // In production, integrate with Fonepay's merchant API
+      const fonepayMerchantCode = process.env.FONEPAY_MERCHANT_CODE;
+      if (!fonepayMerchantCode) {
+        return jsonResponse({ error: "Fonepay not configured" }, 500);
+      }
+
+      const prn = `ride_${rideId}_${Date.now()}`;
+      const paymentUrl = `https://fonepay.com/pay?PID=${fonepayMerchantCode}&PRN=${prn}&AMT=${amount}&RU=${encodeURIComponent(returnUrl ?? "https://meroauto.com/payment/callback")}`;
+
+      return jsonResponse({
+        paymentUrl,
+        transactionId: prn,
+      });
+    } catch (e: any) {
+      return jsonResponse({ error: e.message }, 500);
+    }
+  }),
+});
+
+// ── WorkOS Auth Token Exchange ───────────────────────────────────────
+// Client sends WorkOS authorization code, we exchange it for tokens
+
+http.route({
+  path: "/auth/callback",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      const { code, redirectUri, role } = body;
+
+      if (!code) {
+        return jsonResponse({ error: "Missing authorization code" }, 400);
+      }
+
+      const clientId = process.env.WORKOS_CLIENT_ID;
+      const apiKey = process.env.WORKOS_API_KEY;
+      if (!clientId || !apiKey) {
+        return jsonResponse({ error: "WorkOS not configured" }, 500);
+      }
+
+      // Exchange code for user + access token via WorkOS API
+      const response = await fetch(
+        "https://api.workos.com/user_management/authenticate",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            client_id: clientId,
+            code,
+            grant_type: "authorization_code",
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const error = await response.text();
+        return jsonResponse({ error: `WorkOS auth failed: ${error}` }, 401);
+      }
+
+      const data = await response.json();
+      const { user, access_token, refresh_token } = data;
+
+      // Create or update user in Convex based on role
+      if (role === "rider") {
+        await ctx.runMutation(internal.authCallbacks.ensureRider, {
+          userId: user.id,
+          name: `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || user.email,
+          email: user.email,
+          phone: user.phone_number ?? "",
+        });
+      } else if (role === "driver") {
+        await ctx.runMutation(internal.authCallbacks.ensureDriver, {
+          userId: user.id,
+          name: `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || user.email,
+          email: user.email,
+          phone: user.phone_number ?? "",
+        });
+      }
+
+      return jsonResponse({
+        accessToken: access_token,
+        refreshToken: refresh_token,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          phone: user.phone_number,
+          avatar: user.profile_picture_url,
+          role: role ?? "rider",
+        },
+      });
+    } catch (e: any) {
+      return jsonResponse({ error: e.message }, 500);
+    }
+  }),
+});
+
 export default http;

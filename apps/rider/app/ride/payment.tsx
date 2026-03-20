@@ -11,7 +11,8 @@ import { useToast } from '@/lib/toast';
 import { useNetwork } from '@/lib/network';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { PAYMENT_METHODS, type PaymentMethod } from '@/lib/payment';
+import { PAYMENT_METHODS, type PaymentMethod, initiatePayment } from '@/lib/payment';
+import { useAuth } from '@/lib/auth';
 
 function PaymentScreenInner() {
   const { c } = useTheme();
@@ -19,6 +20,7 @@ function PaymentScreenInner() {
   const insets = useSafeAreaInsets();
   const { isOnline } = useNetwork();
   const toast = useToast();
+  const { user } = useAuth();
   const params = useLocalSearchParams<{
     rideId?: string;
     fare?: string;
@@ -59,6 +61,20 @@ function PaymentScreenInner() {
 
     setIsProcessing(true);
     try {
+      // 1. Initiate payment via @nabwin/paisa (opens eSewa/Khalti in browser)
+      const paymentResult = await initiatePayment(selectedMethod, fare, rideId, {
+        name: user ? `${user.firstName} ${user.lastName}` : undefined,
+        email: user?.email,
+        phone: user?.phone,
+      });
+
+      if (!paymentResult.success) {
+        toast.error(paymentResult.error ?? t('payment.failed'));
+        setIsProcessing(false);
+        return;
+      }
+
+      // 2. Record payment in Convex
       await createPayment({
         rideId: rideId as any,
         riderId: params.riderId as any,
@@ -67,12 +83,13 @@ function PaymentScreenInner() {
         method: selectedMethod,
       });
 
+      toast.success(t('payment.success'));
       setPaymentDone(true);
       setTimeout(() => {
         router.replace({ pathname: '/ride/rating', params: { rideId } });
       }, 1500);
     } catch (error: any) {
-      Alert.alert(t('payment.failed'), error.message ?? 'Payment failed');
+      toast.error(error.message ?? t('payment.failed'));
     } finally {
       setIsProcessing(false);
     }

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { requireAuth, requireDriver, requireRider } from "./lib/auth";
 
 function generateOtp(): string {
   return Math.floor(1000 + Math.random() * 9000).toString();
@@ -9,10 +10,13 @@ function generateOtp(): string {
 export const acceptRideRequest = mutation({
   args: { requestId: v.id("rideRequests") },
   handler: async (ctx, { requestId }) => {
+    const { driverId: authDriverId } = await requireDriver(ctx);
+
     const request = await ctx.db.get(requestId);
     if (!request) throw new Error("Request not found");
     if (request.status !== "matched") throw new Error("Request not in matched state");
     if (!request.matchedDriverId) throw new Error("No driver matched");
+    if (request.matchedDriverId !== authDriverId) throw new Error("Not matched to you");
 
     const driver = await ctx.db.get(request.matchedDriverId);
     if (!driver) throw new Error("Driver not found");
@@ -61,8 +65,10 @@ export const acceptRideRequest = mutation({
 export const driverArrived = mutation({
   args: { rideId: v.id("rides") },
   handler: async (ctx, { rideId }) => {
+    const { driverId } = await requireDriver(ctx);
     const ride = await ctx.db.get(rideId);
     if (!ride) throw new Error("Ride not found");
+    if (ride.driverId !== driverId) throw new Error("Not your ride");
     if (ride.status !== "driver_arriving") throw new Error("Invalid state transition");
     await ctx.db.patch(rideId, { status: "driver_arrived" });
     return rideId;
@@ -76,8 +82,10 @@ export const verifyOtp = mutation({
     otp: v.string(),
   },
   handler: async (ctx, { rideId, otp }) => {
+    const { driverId } = await requireDriver(ctx);
     const ride = await ctx.db.get(rideId);
     if (!ride) throw new Error("Ride not found");
+    if (ride.driverId !== driverId) throw new Error("Not your ride");
     if (ride.status !== "driver_arrived") throw new Error("Driver hasn't arrived yet");
     if (ride.otp !== otp) throw new Error("Invalid OTP");
 
@@ -93,8 +101,10 @@ export const verifyOtp = mutation({
 export const startRide = mutation({
   args: { rideId: v.id("rides") },
   handler: async (ctx, { rideId }) => {
+    const { driverId } = await requireDriver(ctx);
     const ride = await ctx.db.get(rideId);
     if (!ride) throw new Error("Ride not found");
+    if (ride.driverId !== driverId) throw new Error("Not your ride");
     if (ride.status !== "driver_arrived") throw new Error("Driver hasn't arrived yet");
     await ctx.db.patch(rideId, {
       status: "in_progress",
@@ -112,8 +122,10 @@ export const completeRide = mutation({
     finalDistance: v.optional(v.number()),
   },
   handler: async (ctx, { rideId, finalFare, finalDistance }) => {
+    const { driverId } = await requireDriver(ctx);
     const ride = await ctx.db.get(rideId);
     if (!ride) throw new Error("Ride not found");
+    if (ride.driverId !== driverId) throw new Error("Not your ride");
     if (ride.status !== "in_progress") throw new Error("Ride not in progress");
 
     const now = Date.now();
@@ -167,6 +179,7 @@ export const cancelRide = mutation({
     reason: v.optional(v.string()),
   },
   handler: async (ctx, { rideId, reason }) => {
+    await requireAuth(ctx);
     const ride = await ctx.db.get(rideId);
     if (!ride) throw new Error("Ride not found");
     if (ride.status === "completed" || ride.status === "cancelled") {
@@ -208,8 +221,10 @@ export const cancelRide = mutation({
 
 /** Get active ride for a driver */
 export const getActiveRide = query({
-  args: { driverId: v.id("drivers") },
-  handler: async (ctx, { driverId }) => {
+  args: { driverId: v.optional(v.id("drivers")) },
+  handler: async (ctx, { driverId: argDriverId }) => {
+    const { driverId: authDriverId } = await requireDriver(ctx);
+    const driverId = argDriverId ?? authDriverId;
     for (const status of ["driver_arriving", "driver_arrived", "in_progress"] as const) {
       const ride = await ctx.db
         .query("rides")
@@ -224,8 +239,10 @@ export const getActiveRide = query({
 
 /** Get active ride for a rider */
 export const getActiveRideForRider = query({
-  args: { riderId: v.id("riders") },
-  handler: async (ctx, { riderId }) => {
+  args: { riderId: v.optional(v.id("riders")) },
+  handler: async (ctx, { riderId: argRiderId }) => {
+    const { riderId: authRiderId } = await requireRider(ctx);
+    const riderId = argRiderId ?? authRiderId;
     for (const status of ["driver_arriving", "driver_arrived", "in_progress"] as const) {
       const ride = await ctx.db
         .query("rides")
@@ -242,6 +259,7 @@ export const getActiveRideForRider = query({
 export const getRideById = query({
   args: { rideId: v.id("rides") },
   handler: async (ctx, { rideId }) => {
+    await requireAuth(ctx);
     const ride = await ctx.db.get(rideId);
     if (!ride) return null;
 
@@ -256,10 +274,12 @@ export const getRideById = query({
 /** Get rides history for a rider */
 export const getRidesByRider = query({
   args: {
-    riderId: v.id("riders"),
+    riderId: v.optional(v.id("riders")),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, { riderId, limit }) => {
+  handler: async (ctx, { riderId: argRiderId, limit }) => {
+    const { riderId: authRiderId } = await requireRider(ctx);
+    const riderId = argRiderId ?? authRiderId;
     return await ctx.db
       .query("rides")
       .withIndex("by_riderId", (q) => q.eq("riderId", riderId))
@@ -271,10 +291,12 @@ export const getRidesByRider = query({
 /** Get rides history for a driver */
 export const getRidesByDriver = query({
   args: {
-    driverId: v.id("drivers"),
+    driverId: v.optional(v.id("drivers")),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, { driverId, limit }) => {
+  handler: async (ctx, { driverId: argDriverId, limit }) => {
+    const { driverId: authDriverId } = await requireDriver(ctx);
+    const driverId = argDriverId ?? authDriverId;
     return await ctx.db
       .query("rides")
       .withIndex("by_driverId", (q) => q.eq("driverId", driverId))

@@ -1,10 +1,12 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { requireAdmin } from "./lib/auth";
 
 /** Admin dashboard stats */
 export const getDashboardStats = query({
   args: {},
   handler: async (ctx) => {
+    await requireAdmin(ctx);
     const now = Date.now();
     const dayAgo = now - 24 * 60 * 60 * 1000;
     const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
@@ -66,6 +68,7 @@ export const getRevenueReport = query({
     toDate: v.number(),
   },
   handler: async (ctx, { fromDate, toDate }) => {
+    await requireAdmin(ctx);
     const payments = await ctx.db
       .query("payments")
       .filter((q) =>
@@ -98,6 +101,7 @@ export const listAllDrivers = query({
     onlyPending: v.optional(v.boolean()),
   },
   handler: async (ctx, { onlyOnline, onlyPending }) => {
+    await requireAdmin(ctx);
     let drivers = await ctx.db.query("drivers").collect();
 
     if (onlyOnline) {
@@ -115,6 +119,7 @@ export const listAllDrivers = query({
 export const getActiveRides = query({
   args: {},
   handler: async (ctx) => {
+    await requireAdmin(ctx);
     const rides = await ctx.db
       .query("rides")
       .filter((q) =>
@@ -154,6 +159,7 @@ export const getActiveRides = query({
 export const approveDriver = mutation({
   args: { driverId: v.id("drivers") },
   handler: async (ctx, { driverId }) => {
+    await requireAdmin(ctx);
     const driver = await ctx.db.get(driverId);
     if (!driver) throw new Error("Driver not found");
     await ctx.db.patch(driverId, { isApproved: true, isSuspended: false });
@@ -165,6 +171,7 @@ export const approveDriver = mutation({
 export const suspendDriver = mutation({
   args: { driverId: v.id("drivers") },
   handler: async (ctx, { driverId }) => {
+    await requireAdmin(ctx);
     const driver = await ctx.db.get(driverId);
     if (!driver) throw new Error("Driver not found");
     await ctx.db.patch(driverId, { isSuspended: true, isOnline: false });
@@ -176,6 +183,7 @@ export const suspendDriver = mutation({
 export const unsuspendDriver = mutation({
   args: { driverId: v.id("drivers") },
   handler: async (ctx, { driverId }) => {
+    await requireAdmin(ctx);
     const driver = await ctx.db.get(driverId);
     if (!driver) throw new Error("Driver not found");
     await ctx.db.patch(driverId, { isSuspended: false });

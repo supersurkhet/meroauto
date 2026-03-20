@@ -7,12 +7,13 @@ import {
   validateFare,
   validateDistance,
 } from "./lib/validators";
+import { requireAuth, requireRider, requireDriver } from "./lib/auth";
 
 const RIDE_REQUEST_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
 
 export const createRideRequest = mutation({
   args: {
-    riderId: v.id("riders"),
+    riderId: v.optional(v.id("riders")),
     pickupLatitude: v.number(),
     pickupLongitude: v.number(),
     pickupAddress: v.string(),
@@ -25,6 +26,10 @@ export const createRideRequest = mutation({
     isPooling: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    // Auth: get rider from authenticated user
+    const { riderId: authRiderId } = await requireRider(ctx);
+    const riderId = args.riderId ?? authRiderId;
+
     // Validate inputs
     validateCoordinates(args.pickupLatitude, args.pickupLongitude);
     validateCoordinates(args.dropoffLatitude, args.dropoffLongitude);
@@ -34,15 +39,10 @@ export const createRideRequest = mutation({
     validateDistance(args.estimatedDistance);
     if (args.estimatedDuration < 0) throw new Error("Duration cannot be negative");
 
-    // Verify rider exists
-    const rider = await ctx.db.get(args.riderId);
-    if (!rider) throw new Error("Rider not found");
-    if (!rider.isActive) throw new Error("Rider account is inactive");
-
     // Check for existing active request
     const existing = await ctx.db
       .query("rideRequests")
-      .withIndex("by_riderId", (q) => q.eq("riderId", args.riderId))
+      .withIndex("by_riderId", (q) => q.eq("riderId", riderId))
       .filter((q) =>
         q.or(
           q.eq(q.field("status"), "pending"),
@@ -54,7 +54,7 @@ export const createRideRequest = mutation({
 
     const now = Date.now();
     const requestId = await ctx.db.insert("rideRequests", {
-      riderId: args.riderId,
+      riderId,
       pickupLatitude: args.pickupLatitude,
       pickupLongitude: args.pickupLongitude,
       pickupAddress: args.pickupAddress,
@@ -91,6 +91,7 @@ export const createRideRequest = mutation({
 export const cancelRideRequest = mutation({
   args: { requestId: v.id("rideRequests") },
   handler: async (ctx, { requestId }) => {
+    await requireAuth(ctx);
     const request = await ctx.db.get(requestId);
     if (!request) throw new Error("Request not found");
     if (request.status !== "pending" && request.status !== "matched") {
@@ -142,13 +143,16 @@ export const autoExpireRequest = internalMutation({
 export const getRideRequestById = query({
   args: { requestId: v.id("rideRequests") },
   handler: async (ctx, { requestId }) => {
+    await requireAuth(ctx);
     return await ctx.db.get(requestId);
   },
 });
 
 export const getActiveRequestForRider = query({
-  args: { riderId: v.id("riders") },
-  handler: async (ctx, { riderId }) => {
+  args: { riderId: v.optional(v.id("riders")) },
+  handler: async (ctx, { riderId: argRiderId }) => {
+    const { riderId: authRiderId } = await requireRider(ctx);
+    const riderId = argRiderId ?? authRiderId;
     // Check pending first, then matched
     for (const status of ["pending", "matched", "accepted"] as const) {
       const request = await ctx.db
@@ -163,8 +167,10 @@ export const getActiveRequestForRider = query({
 });
 
 export const getPendingRequestsForDriver = query({
-  args: { driverId: v.id("drivers") },
-  handler: async (ctx, { driverId }) => {
+  args: { driverId: v.optional(v.id("drivers")) },
+  handler: async (ctx, { driverId: argDriverId }) => {
+    const { driverId: authDriverId } = await requireDriver(ctx);
+    const driverId = argDriverId ?? authDriverId;
     return await ctx.db
       .query("rideRequests")
       .withIndex("by_matchedDriverId", (q) => q.eq("matchedDriverId", driverId))

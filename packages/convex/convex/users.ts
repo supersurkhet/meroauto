@@ -1,30 +1,30 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { validateNonEmpty, validatePhone } from "./lib/validators";
+import { requireAuth, requireAdmin } from "./lib/auth";
 
 // ── Rider CRUD ──────────────────────────────────────────────────────
 
 export const createRider = mutation({
   args: {
-    userId: v.string(),
     name: v.string(),
     phone: v.string(),
     email: v.optional(v.string()),
     preferredLanguage: v.optional(v.union(v.literal("en"), v.literal("ne"))),
   },
   handler: async (ctx, args) => {
-    validateNonEmpty(args.userId, "userId");
+    const userId = await requireAuth(ctx);
     validateNonEmpty(args.name, "name");
     validatePhone(args.phone);
 
     const existing = await ctx.db
       .query("riders")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
     if (existing) return existing._id;
 
     return await ctx.db.insert("riders", {
-      userId: args.userId,
+      userId,
       name: args.name,
       phone: args.phone,
       email: args.email,
@@ -35,9 +35,28 @@ export const createRider = mutation({
   },
 });
 
+export const me = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireAuth(ctx);
+    const rider = await ctx.db
+      .query("riders")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (rider) return { ...rider, role: "rider" as const };
+    const driver = await ctx.db
+      .query("drivers")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (driver) return { ...driver, role: "driver" as const };
+    return null;
+  },
+});
+
 export const getRider = query({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("riders")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
@@ -48,6 +67,7 @@ export const getRider = query({
 export const getRiderById = query({
   args: { riderId: v.id("riders") },
   handler: async (ctx, { riderId }) => {
+    await requireAuth(ctx);
     return await ctx.db.get(riderId);
   },
 });
@@ -62,6 +82,9 @@ export const updateRider = mutation({
     preferredLanguage: v.optional(v.union(v.literal("en"), v.literal("ne"))),
   },
   handler: async (ctx, { riderId, ...updates }) => {
+    const userId = await requireAuth(ctx);
+    const rider = await ctx.db.get(riderId);
+    if (!rider || rider.userId !== userId) throw new Error("Not authorized");
     const filtered = Object.fromEntries(
       Object.entries(updates).filter(([_, v]) => v !== undefined),
     );
@@ -76,7 +99,6 @@ export const updateRider = mutation({
 
 export const createDriver = mutation({
   args: {
-    userId: v.string(),
     name: v.string(),
     phone: v.string(),
     email: v.optional(v.string()),
@@ -85,7 +107,7 @@ export const createDriver = mutation({
     preferredLanguage: v.optional(v.union(v.literal("en"), v.literal("ne"))),
   },
   handler: async (ctx, args) => {
-    validateNonEmpty(args.userId, "userId");
+    const userId = await requireAuth(ctx);
     validateNonEmpty(args.name, "name");
     validatePhone(args.phone);
     validateNonEmpty(args.licenseNumber, "licenseNumber");
@@ -95,12 +117,12 @@ export const createDriver = mutation({
 
     const existing = await ctx.db
       .query("drivers")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
     if (existing) return existing._id;
 
     return await ctx.db.insert("drivers", {
-      userId: args.userId,
+      userId,
       name: args.name,
       phone: args.phone,
       email: args.email,
@@ -121,6 +143,7 @@ export const createDriver = mutation({
 export const getDriver = query({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("drivers")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
@@ -131,6 +154,7 @@ export const getDriver = query({
 export const getDriverById = query({
   args: { driverId: v.id("drivers") },
   handler: async (ctx, { driverId }) => {
+    await requireAuth(ctx);
     return await ctx.db.get(driverId);
   },
 });
@@ -147,6 +171,9 @@ export const updateDriver = mutation({
     preferredLanguage: v.optional(v.union(v.literal("en"), v.literal("ne"))),
   },
   handler: async (ctx, { driverId, ...updates }) => {
+    const userId = await requireAuth(ctx);
+    const driver = await ctx.db.get(driverId);
+    if (!driver || driver.userId !== userId) throw new Error("Not authorized");
     const filtered = Object.fromEntries(
       Object.entries(updates).filter(([_, v]) => v !== undefined),
     );
@@ -159,15 +186,18 @@ export const updateDriver = mutation({
 
 export const updateDriverStatus = mutation({
   args: {
-    driverId: v.id("drivers"),
     isOnline: v.boolean(),
   },
-  handler: async (ctx, { driverId, isOnline }) => {
-    const driver = await ctx.db.get(driverId);
+  handler: async (ctx, { isOnline }) => {
+    const userId = await requireAuth(ctx);
+    const driver = await ctx.db
+      .query("drivers")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
     if (!driver) throw new Error("Driver not found");
     if (driver.isSuspended) throw new Error("Driver is suspended");
     if (!driver.isApproved) throw new Error("Driver not approved");
-    await ctx.db.patch(driverId, { isOnline });
-    return driverId;
+    await ctx.db.patch(driver._id, { isOnline });
+    return driver._id;
   },
 });

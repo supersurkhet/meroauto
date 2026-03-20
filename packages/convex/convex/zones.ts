@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { requireAdmin } from "./lib/auth";
 
 const EARTH_RADIUS_KM = 6371;
 function toRadians(deg: number) {

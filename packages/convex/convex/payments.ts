@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { validateFare } from "./lib/validators";
+import { requireAuth, requireAdmin } from "./lib/auth";
 
 export const createPayment = mutation({
   args: {
@@ -16,6 +17,7 @@ export const createPayment = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     validateFare(args.amount);
 
     // Verify ride exists and is in completable state
@@ -55,6 +57,7 @@ export const completePayment = mutation({
     transactionId: v.optional(v.string()),
   },
   handler: async (ctx, { paymentId, transactionId }) => {
+    await requireAuth(ctx);
     const payment = await ctx.db.get(paymentId);
     if (!payment) throw new Error("Payment not found");
     if (payment.status !== "pending") throw new Error("Payment not pending");
@@ -71,6 +74,7 @@ export const completePayment = mutation({
 export const failPayment = mutation({
   args: { paymentId: v.id("payments") },
   handler: async (ctx, { paymentId }) => {
+    await requireAuth(ctx);
     const payment = await ctx.db.get(paymentId);
     if (!payment) throw new Error("Payment not found");
     if (payment.status !== "pending") throw new Error("Payment not pending");
@@ -83,6 +87,7 @@ export const failPayment = mutation({
 export const refundPayment = mutation({
   args: { paymentId: v.id("payments") },
   handler: async (ctx, { paymentId }) => {
+    await requireAdmin(ctx);
     const payment = await ctx.db.get(paymentId);
     if (!payment) throw new Error("Payment not found");
     if (payment.status !== "completed") throw new Error("Can only refund completed payments");
@@ -95,6 +100,7 @@ export const refundPayment = mutation({
 export const getPaymentByRide = query({
   args: { rideId: v.id("rides") },
   handler: async (ctx, { rideId }) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("payments")
       .withIndex("by_rideId", (q) => q.eq("rideId", rideId))

@@ -1,13 +1,17 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
+import * as Linking from 'expo-linking';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const WORKOS_CLIENT_ID = process.env.EXPO_PUBLIC_WORKOS_CLIENT_ID ?? '';
+const WORKOS_CLIENT_ID =
+  process.env.EXPO_PUBLIC_WORKOS_CLIENT_ID ?? 'client_01KKYG4JJK79BPD8C3QHRPKVS9';
 const WORKOS_REDIRECT_URI = AuthSession.makeRedirectUri({ scheme: 'meroauto-rider' });
+const WORKOS_BASE_URL = 'https://api.workos.com';
 const TOKEN_KEY = 'meroauto_auth_token';
+const REFRESH_KEY = 'meroauto_refresh_token';
 const USER_KEY = 'meroauto_user';
 
 export type User = {
@@ -50,59 +54,90 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(JSON.parse(storedUser));
       }
     } catch {
-      // Token expired or invalid
+      // Token expired or corrupt — clear
+      await clearAuth();
     } finally {
       setIsLoading(false);
     }
   }
 
-  async function login() {
-    try {
-      const authUrl = `https://api.workos.com/user_management/authorize?client_id=${WORKOS_CLIENT_ID}&redirect_uri=${encodeURIComponent(WORKOS_REDIRECT_URI)}&response_type=code&provider=authkit&state=rider_login`;
+  async function clearAuth() {
+    await SecureStore.deleteItemAsync(TOKEN_KEY).catch(() => {});
+    await SecureStore.deleteItemAsync(REFRESH_KEY).catch(() => {});
+    await SecureStore.deleteItemAsync(USER_KEY).catch(() => {});
+  }
 
-      const result = await WebBrowser.openAuthSessionAsync(authUrl, WORKOS_REDIRECT_URI);
+  const login = useCallback(async () => {
+    const authUrl =
+      `${WORKOS_BASE_URL}/user_management/authorize` +
+      `?client_id=${WORKOS_CLIENT_ID}` +
+      `&redirect_uri=${encodeURIComponent(WORKOS_REDIRECT_URI)}` +
+      `&response_type=code` +
+      `&provider=authkit` +
+      `&state=rider_login`;
 
-      if (result.type === 'success' && result.url) {
-        const url = new URL(result.url);
-        const code = url.searchParams.get('code');
-        if (code) {
-          await exchangeCode(code);
-        }
+    const result = await WebBrowser.openAuthSessionAsync(authUrl, WORKOS_REDIRECT_URI);
+
+    if (result.type === 'success' && result.url) {
+      const url = new URL(result.url);
+      const code = url.searchParams.get('code');
+      if (code) {
+        await exchangeCode(code);
       }
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw error;
+    } else if (result.type === 'cancel' || result.type === 'dismiss') {
+      // User cancelled — no-op
     }
-  }
+  }, []);
 
-  async function signup() {
-    // Same OAuth flow — WorkOS handles signup vs login
+  const signup = useCallback(async () => {
+    // WorkOS AuthKit handles both login and signup in the same flow
     return login();
-  }
+  }, [login]);
 
   async function exchangeCode(code: string) {
     const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3001';
     const response = await fetch(`${apiUrl}/auth/callback`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, redirectUri: WORKOS_REDIRECT_URI, role: 'rider' }),
+      body: JSON.stringify({
+        code,
+        redirectUri: WORKOS_REDIRECT_URI,
+        role: 'rider',
+        clientId: WORKOS_CLIENT_ID,
+      }),
     });
 
-    if (!response.ok) throw new Error('Auth exchange failed');
+    if (!response.ok) {
+      const text = await response.text().catch(() => 'Unknown error');
+      throw new Error(`Auth exchange failed: ${response.status} — ${text}`);
+    }
 
     const data = await response.json();
-    await SecureStore.setItemAsync(TOKEN_KEY, data.accessToken);
-    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(data.user));
-    setToken(data.accessToken);
-    setUser(data.user);
+    const authUser: User = {
+      id: data.user?.id ?? data.userId ?? '',
+      email: data.user?.email ?? '',
+      firstName: data.user?.firstName ?? data.user?.first_name ?? '',
+      lastName: data.user?.lastName ?? data.user?.last_name ?? '',
+      phone: data.user?.phone,
+      avatar: data.user?.avatar ?? data.user?.profile_picture_url,
+      role: 'rider',
+    };
+
+    await SecureStore.setItemAsync(TOKEN_KEY, data.accessToken ?? data.access_token ?? '');
+    if (data.refreshToken ?? data.refresh_token) {
+      await SecureStore.setItemAsync(REFRESH_KEY, data.refreshToken ?? data.refresh_token);
+    }
+    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(authUser));
+
+    setToken(data.accessToken ?? data.access_token);
+    setUser(authUser);
   }
 
-  async function logout() {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
-    await SecureStore.deleteItemAsync(USER_KEY);
+  const logout = useCallback(async () => {
+    await clearAuth();
     setToken(null);
     setUser(null);
-  }
+  }, []);
 
   return (
     <AuthContext.Provider

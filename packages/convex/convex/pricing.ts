@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { validateCoordinates, validateFare, validateSurgeMultiplier } from "./lib/validators";
+import { requireAuth, requireAdmin } from "./lib/auth";
 
 const EARTH_RADIUS_KM = 6371;
 function toRadians(deg: number) {
@@ -148,6 +149,7 @@ export const updatePricing = mutation({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, { pricingId, ...updates }) => {
+    await requireAdmin(ctx);
     const filtered = Object.fromEntries(
       Object.entries(updates).filter(([_, v]) => v !== undefined),
     );
@@ -167,6 +169,7 @@ export const createPricing = mutation({
     surgePriceMultiplier: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     validateFare(args.baseFare);
     validateFare(args.minimumFare);
     if (args.perKmRate < 0) throw new Error("Per km rate cannot be negative");
@@ -197,6 +200,7 @@ export const setSurgeMultiplier = mutation({
     multiplier: v.number(),
   },
   handler: async (ctx, { zoneId, multiplier }) => {
+    await requireAdmin(ctx);
     validateSurgeMultiplier(multiplier);
 
     const pricingRules = zoneId

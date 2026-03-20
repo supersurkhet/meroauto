@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { validateRating, validateNonEmpty } from "./lib/validators";
+import { requireAuth } from "./lib/auth";
 
 export const submitRating = mutation({
   args: {
@@ -11,6 +12,7 @@ export const submitRating = mutation({
     comment: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     validateRating(args.rating);
     validateNonEmpty(args.fromUserId, "fromUserId");
     validateNonEmpty(args.toUserId, "toUserId");

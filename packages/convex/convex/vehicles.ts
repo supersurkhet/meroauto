@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { validateNonEmpty, validateCapacity } from "./lib/validators";
+import { requireAuth, requireDriver, requireAdmin } from "./lib/auth";
 
 export const registerVehicle = mutation({
   args: {
@@ -11,6 +12,7 @@ export const registerVehicle = mutation({
     capacity: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireDriver(ctx);
     validateNonEmpty(args.registrationNumber, "registrationNumber");
     validateNonEmpty(args.model, "model");
     validateNonEmpty(args.color, "color");

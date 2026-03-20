@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { validateCoordinates } from "./lib/validators";
+import { requireAuth, requireDriver } from "./lib/auth";
 
 const EARTH_RADIUS_KM = 6371;
 function toRadians(deg: number) {
@@ -25,6 +26,7 @@ export const updateDriverLocation = mutation({
     speed: v.optional(v.number()),
   },
   handler: async (ctx, { driverId, latitude, longitude, heading, speed }) => {
+    await requireDriver(ctx);
     validateCoordinates(latitude, longitude);
     const existing = await ctx.db
       .query("driverLocations")
@@ -57,6 +59,7 @@ export const updateDriverLocation = mutation({
 export const getDriverLocation = query({
   args: { driverId: v.id("drivers") },
   handler: async (ctx, { driverId }) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("driverLocations")
       .withIndex("by_driverId", (q) => q.eq("driverId", driverId))
@@ -72,6 +75,7 @@ export const getNearbyDrivers = query({
     radiusKm: v.optional(v.number()),
   },
   handler: async (ctx, { latitude, longitude, radiusKm }) => {
+    await requireAuth(ctx);
     const radius = radiusKm ?? 5;
     const allLocations = await ctx.db.query("driverLocations").collect();
     const results: Array<{
