@@ -3,6 +3,7 @@
   import { t } from "$lib/i18n";
   import { qrCodes, drivers, vehicles, refreshQrCodes, generateQrCode, deactivateQrCode } from "$lib/stores/data";
   import { cn } from "$lib/utils";
+  import { SearchInput, Select, Label } from "$lib/components/ui";
 
   onMount(() => { refreshQrCodes(); });
 
@@ -54,17 +55,14 @@
   {#if showGenerate}
     <div class="rounded-xl border bg-card p-5 shadow-sm max-w-md space-y-3">
       <h3 class="font-semibold">Generate New QR Code</h3>
-      <div><label class="text-xs text-muted-foreground">Driver</label><select bind:value={selectedDriverId} class="w-full rounded-md border bg-background px-3 py-1.5 text-sm mt-1"><option value="">Select driver...</option>{#each approvedDrivers as d}<option value={d._id}>{d.name} ({d.licenseNumber})</option>{/each}</select></div>
-      {#if selectedDriverId}<div><label class="text-xs text-muted-foreground">Vehicle</label><select bind:value={selectedVehicleId} class="w-full rounded-md border bg-background px-3 py-1.5 text-sm mt-1"><option value="">Select vehicle...</option>{#each driverVehicles as v}<option value={v._id}>{v.registrationNumber} ({v.type.replace("_", " ")})</option>{/each}</select></div>{/if}
+      <div><Label class="text-xs text-muted-foreground">Driver</Label><Select class="mt-1" bind:value={selectedDriverId}><option value="">Select driver...</option>{#each approvedDrivers as d}<option value={d._id}>{d.name} ({d.licenseNumber})</option>{/each}</Select></div>
+      {#if selectedDriverId}<div><Label class="text-xs text-muted-foreground">Vehicle</Label><Select class="mt-1" bind:value={selectedVehicleId}><option value="">Select vehicle...</option>{#each driverVehicles as v}<option value={v._id}>{v.registrationNumber} ({v.type.replace("_", " ")})</option>{/each}</Select></div>{/if}
       <button onclick={handleGenerate} disabled={!selectedDriverId || !selectedVehicleId || generating} class="w-full rounded-md bg-primary py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">{generating ? "Generating..." : $t("qr.generate")}</button>
     </div>
   {/if}
 
   <div class="flex items-center gap-4">
-    <div class="relative flex-1 max-w-sm">
-      <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-      <input type="text" placeholder="Search QR codes..." bind:value={search} class="w-full rounded-lg border bg-background px-9 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
-    </div>
+    <SearchInput class="flex-1 max-w-sm" placeholder="Search QR codes..." bind:value={search} />
     <div class="flex rounded-lg border bg-background p-0.5">
       {#each [{v:"all",l:"All"},{v:"active",l:"Active"},{v:"inactive",l:"Inactive"}] as f}
         <button onclick={() => (filter = f.v as typeof filter)} class={cn("rounded-md px-3 py-1.5 text-xs font-medium transition-colors", filter === f.v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>{f.l}</button>

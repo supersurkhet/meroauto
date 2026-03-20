@@ -31,7 +31,7 @@
       disabled={$authLoading}
       class="w-full rounded-lg bg-primary py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
     >
-      {$authLoading ? "Signing in..." : "Sign in with WorkOS"}
+      {$authLoading ? "Signing in..." : "Sign in to Admin Panel"}
     </button>
 
     <p class="text-xs text-muted-foreground mt-4">Admin access only. Contact your administrator for access.</p>

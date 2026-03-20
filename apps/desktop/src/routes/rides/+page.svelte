@@ -3,6 +3,7 @@
   import { t } from "$lib/i18n";
   import { rides, refreshRides } from "$lib/stores/data";
   import { formatCurrency, formatDateTime, cn, statusColor } from "$lib/utils";
+  import { SearchInput } from "$lib/components/ui";
 
   onMount(() => { refreshRides(); });
 
@@ -30,10 +31,7 @@
   <div><h1 class="text-2xl font-bold tracking-tight">{$t("rides.title")}</h1><p class="text-sm text-muted-foreground">{filtered().length} rides</p></div>
 
   <div class="flex items-center gap-4 flex-wrap">
-    <div class="relative flex-1 max-w-sm">
-      <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-      <input type="text" placeholder={$t("rides.search")} bind:value={search} class="w-full rounded-lg border bg-background px-9 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
-    </div>
+    <SearchInput class="flex-1 max-w-sm" placeholder={$t("rides.search")} bind:value={search} />
     <div class="flex rounded-lg border bg-background p-0.5">
       {#each statusFilters as f}
         <button onclick={() => (statusFilter = f.value)} class={cn("rounded-md px-3 py-1.5 text-xs font-medium transition-colors", statusFilter === f.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>{$t(f.label)}</button>

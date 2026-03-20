@@ -3,6 +3,7 @@
   import { t } from "$lib/i18n";
   import { zones, refreshZones, createZone, updateZone, removeZone } from "$lib/stores/data";
   import { cn } from "$lib/utils";
+  import { Input, Label } from "$lib/components/ui";
 
   let mapContainer: HTMLDivElement;
   let map: any;
@@ -68,17 +69,17 @@
       {#if isAdding}
         <div class="rounded-xl border bg-card p-4 shadow-sm space-y-3">
           <h3 class="text-sm font-semibold">{$t("zones.addZone")}</h3>
-          <div><label class="text-xs text-muted-foreground">{$t("zones.name")}</label><input bind:value={newZone.name} class="w-full rounded-md border bg-background px-3 py-1.5 text-sm mt-1 outline-none focus:ring-2 focus:ring-ring" /></div>
-          <div><label class="text-xs text-muted-foreground">{$t("zones.nameNe")}</label><input bind:value={newZone.nameNe} class="w-full rounded-md border bg-background px-3 py-1.5 text-sm mt-1 outline-none focus:ring-2 focus:ring-ring" /></div>
+          <div><Label class="text-xs">{$t("zones.name")}</Label><Input bind:value={newZone.name} class="mt-1" /></div>
+          <div><Label class="text-xs">{$t("zones.nameNe")}</Label><Input bind:value={newZone.nameNe} class="mt-1" /></div>
           <div class="rounded-md border border-dashed border-blue-400 bg-blue-50/50 dark:bg-blue-900/10 p-2 text-center">
             <p class="text-xs font-medium text-blue-600 dark:text-blue-400">Click on the map to set zone center</p>
             <p class="text-[11px] text-muted-foreground mt-0.5">{newZone.centerLat.toFixed(4)}, {newZone.centerLng.toFixed(4)}</p>
           </div>
-          <div><label class="text-xs text-muted-foreground">{$t("zones.radius")}</label><input type="number" step="0.5" bind:value={newZone.radiusKm} class="w-full rounded-md border bg-background px-3 py-1.5 text-sm mt-1 outline-none focus:ring-2 focus:ring-ring" /></div>
+          <div><Label class="text-xs">{$t("zones.radius")}</Label><Input type="number" step="0.5" bind:value={newZone.radiusKm} class="mt-1" /></div>
           <div class="grid grid-cols-3 gap-2">
-            <div><label class="text-xs text-muted-foreground">Base Fare</label><input type="number" bind:value={newZone.baseFare} class="w-full rounded-md border bg-background px-3 py-1.5 text-sm mt-1 outline-none focus:ring-2 focus:ring-ring" /></div>
-            <div><label class="text-xs text-muted-foreground">Per km</label><input type="number" bind:value={newZone.perKmRate} class="w-full rounded-md border bg-background px-3 py-1.5 text-sm mt-1 outline-none focus:ring-2 focus:ring-ring" /></div>
-            <div><label class="text-xs text-muted-foreground">Min Fare</label><input type="number" bind:value={newZone.minimumFare} class="w-full rounded-md border bg-background px-3 py-1.5 text-sm mt-1 outline-none focus:ring-2 focus:ring-ring" /></div>
+            <div><Label class="text-xs">Base Fare</Label><Input type="number" bind:value={newZone.baseFare} class="mt-1" /></div>
+            <div><Label class="text-xs">Per km</Label><Input type="number" bind:value={newZone.perKmRate} class="mt-1" /></div>
+            <div><Label class="text-xs">Min Fare</Label><Input type="number" bind:value={newZone.minimumFare} class="mt-1" /></div>
           </div>
           <button onclick={handleAdd} class="w-full rounded-md bg-primary py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">{$t("common.save")}</button>
         </div>

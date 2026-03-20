@@ -3,6 +3,7 @@
   import { t } from "$lib/i18n";
   import { pricingRules, refreshPricing, updatePricingRule, createPricingRule } from "$lib/stores/data";
   import { formatCurrency, cn } from "$lib/utils";
+  import { Input, Select, Label } from "$lib/components/ui";
   import type { PricingRule } from "$lib/stores/types";
 
   onMount(() => { refreshPricing(); });
@@ -45,9 +46,9 @@
     <div class="rounded-xl border bg-card p-5 shadow-sm max-w-md">
       <h3 class="font-semibold mb-4">New Pricing Rule</h3>
       <div class="space-y-3">
-        <div><label class="text-xs text-muted-foreground">Vehicle Type</label><select bind:value={newRule.vehicleType} class="w-full rounded-md border bg-background px-3 py-1.5 text-sm mt-1"><option value="auto_rickshaw">Auto Rickshaw</option><option value="e_rickshaw">E-Rickshaw</option></select></div>
+        <div><Label class="text-xs text-muted-foreground">Vehicle Type</Label><Select class="mt-1" bind:value={newRule.vehicleType}><option value="auto_rickshaw">Auto Rickshaw</option><option value="e_rickshaw">E-Rickshaw</option></Select></div>
         {#each fields as field}
-          <div class="flex items-center justify-between"><label class="text-sm text-muted-foreground">{$t(field.label)}</label><div class="flex items-center gap-2"><input type="number" step={field.key === "surgeMultiplier" ? "0.1" : "1"} bind:value={newRule[field.key]} class="w-24 rounded-md border bg-background px-3 py-1.5 text-sm text-right outline-none focus:ring-2 focus:ring-ring" /><span class="text-xs text-muted-foreground w-12">{field.unit}</span></div></div>
+          <div class="flex items-center justify-between"><Label class="text-sm text-muted-foreground">{$t(field.label)}</Label><div class="flex items-center gap-2"><Input type="number" step={field.key === "surgeMultiplier" ? "0.1" : "1"} bind:value={newRule[field.key]} class="w-24 text-right" /><span class="text-xs text-muted-foreground w-12">{field.unit}</span></div></div>
         {/each}
         <button onclick={addRule} class="w-full rounded-md bg-primary py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">{$t("common.save")}</button>
       </div>
@@ -64,7 +65,7 @@
         {#if editingId === p._id}
           <div class="space-y-3">
             {#each fields as field}
-              <div class="flex items-center justify-between"><label class="text-sm text-muted-foreground">{$t(field.label)}</label><div class="flex items-center gap-2"><input type="number" step={field.key === "surgeMultiplier" ? "0.1" : "1"} value={editValues[field.key] ?? 0} oninput={(e) => { editValues = { ...editValues, [field.key]: parseFloat((e.target as HTMLInputElement).value) }; }} class="w-24 rounded-md border bg-background px-3 py-1.5 text-sm text-right outline-none focus:ring-2 focus:ring-ring" /><span class="text-xs text-muted-foreground w-12">{field.unit}</span></div></div>
+              <div class="flex items-center justify-between"><Label class="text-sm text-muted-foreground">{$t(field.label)}</Label><div class="flex items-center gap-2"><Input type="number" step={field.key === "surgeMultiplier" ? "0.1" : "1"} value={editValues[field.key] ?? 0} oninput={(e) => { editValues = { ...editValues, [field.key]: parseFloat((e.target as HTMLInputElement).value) }; }} class="w-24 text-right" /><span class="text-xs text-muted-foreground w-12">{field.unit}</span></div></div>
             {/each}
             <div class="flex justify-end gap-2 pt-2">
               <button onclick={() => { editingId = null; }} class="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted transition-colors">{$t("common.cancel")}</button>
