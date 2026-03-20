@@ -92,6 +92,7 @@ export const getZoneForLocation = query({
 export const getAllZones = query({
   args: {},
   handler: async (ctx) => {
+    await requireAdmin(ctx);
     return await ctx.db.query("zones").collect();
   },
 });

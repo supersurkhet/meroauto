@@ -216,6 +216,7 @@ export const subscribeActiveRides = query({
 export const getOnlineDriverCount = query({
   args: {},
   handler: async (ctx) => {
+    await requireAuth(ctx);
     const onlineDrivers = await ctx.db
       .query("drivers")
       .withIndex("by_isOnline", (q) => q.eq("isOnline", true))
@@ -231,6 +232,7 @@ export const getDriverLocationHistory = query({
     since: v.number(),
   },
   handler: async (ctx, { driverId, since }) => {
+    await requireAuth(ctx);
     // Since driverLocations only stores latest, we query rides for route data
     const rides = await ctx.db
       .query("rides")

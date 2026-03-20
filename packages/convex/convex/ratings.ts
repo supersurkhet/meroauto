@@ -68,6 +68,7 @@ export const getRatingsForUser = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { userId, limit }) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("ratings")
       .withIndex("by_toUserId", (q) => q.eq("toUserId", userId))
@@ -79,6 +80,7 @@ export const getRatingsForUser = query({
 export const getAverageRating = query({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
+    await requireAuth(ctx);
     const ratings = await ctx.db
       .query("ratings")
       .withIndex("by_toUserId", (q) => q.eq("toUserId", userId))
@@ -97,6 +99,7 @@ export const getAverageRating = query({
 export const getRatingForRide = query({
   args: { rideId: v.id("rides") },
   handler: async (ctx, { rideId }) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("ratings")
       .withIndex("by_rideId", (q) => q.eq("rideId", rideId))

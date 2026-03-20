@@ -161,6 +161,7 @@ export const joinPooledRide = mutation({
 export const getPoolRiders = query({
   args: { rideId: v.id("rides") },
   handler: async (ctx, { rideId }) => {
+    await requireAuth(ctx);
     const poolEntries = await ctx.db
       .query("poolRiders")
       .withIndex("by_rideId", (q) => q.eq("rideId", rideId))

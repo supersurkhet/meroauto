@@ -114,6 +114,7 @@ export const getPaymentsByRider = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { riderId, limit }) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("payments")
       .withIndex("by_riderId", (q) => q.eq("riderId", riderId))
@@ -128,6 +129,7 @@ export const getPaymentsByDriver = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { driverId, limit }) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("payments")
       .withIndex("by_driverId", (q) => q.eq("driverId", driverId))

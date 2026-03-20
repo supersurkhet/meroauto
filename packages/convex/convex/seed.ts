@@ -1,9 +1,11 @@
 import { mutation } from "./_generated/server";
+import { requireAdmin } from "./lib/auth";
 
 /** Seed the database with Surkhet zones and default pricing */
 export const seedDefaults = mutation({
   args: {},
   handler: async (ctx) => {
+    await requireAdmin(ctx);
     const existingZone = await ctx.db.query("zones").first();
     if (existingZone) return "Already seeded";
 

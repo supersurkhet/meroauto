@@ -44,6 +44,7 @@ export const createQrCode = mutation({
 export const lookupQrCode = query({
   args: { qrCode: v.string() },
   handler: async (ctx, { qrCode }) => {
+    await requireAuth(ctx);
     const qr = await ctx.db
       .query("autoQrCodes")
       .withIndex("by_qrCode", (q) => q.eq("qrCode", qrCode))
@@ -75,6 +76,7 @@ export const lookupQrCode = query({
 export const getDriverQrCode = query({
   args: { driverId: v.id("drivers") },
   handler: async (ctx, { driverId }) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("autoQrCodes")
       .withIndex("by_driverId", (q) => q.eq("driverId", driverId))
@@ -190,6 +192,7 @@ export const deactivateQrCode = mutation({
 export const listAllQrCodes = query({
   args: {},
   handler: async (ctx) => {
+    await requireAdmin(ctx);
     const codes = await ctx.db.query("autoQrCodes").collect();
     const results = [];
     for (const qr of codes) {

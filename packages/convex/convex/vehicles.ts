@@ -51,6 +51,7 @@ export const updateVehicle = mutation({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, { vehicleId, ...updates }) => {
+    await requireDriver(ctx);
     const filtered = Object.fromEntries(
       Object.entries(updates).filter(([_, v]) => v !== undefined),
     );
@@ -64,6 +65,7 @@ export const updateVehicle = mutation({
 export const getVehiclesByDriver = query({
   args: { driverId: v.id("drivers") },
   handler: async (ctx, { driverId }) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("vehicles")
       .withIndex("by_driverId", (q) => q.eq("driverId", driverId))
@@ -74,6 +76,7 @@ export const getVehiclesByDriver = query({
 export const getActiveVehicle = query({
   args: { driverId: v.id("drivers") },
   handler: async (ctx, { driverId }) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("vehicles")
       .withIndex("by_driverId", (q) => q.eq("driverId", driverId))
@@ -85,6 +88,7 @@ export const getActiveVehicle = query({
 export const getAllVehicles = query({
   args: {},
   handler: async (ctx) => {
+    await requireAdmin(ctx);
     const vehicles = await ctx.db.query("vehicles").collect();
     const results = [];
     for (const v of vehicles) {
