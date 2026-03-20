@@ -81,6 +81,96 @@ export const getDriverQrCode = query({
   },
 });
 
+/** QR Instant Ride — scan QR, skip matching, create ride directly */
+export const createQrRideRequest = mutation({
+  args: {
+    qrCode: v.string(),
+    riderId: v.id("riders"),
+    pickupLatitude: v.number(),
+    pickupLongitude: v.number(),
+    pickupAddress: v.string(),
+    dropoffLatitude: v.number(),
+    dropoffLongitude: v.number(),
+    dropoffAddress: v.string(),
+    estimatedFare: v.number(),
+    estimatedDistance: v.number(),
+    paymentMethod: v.optional(
+      v.union(v.literal("cash"), v.literal("khalti"), v.literal("esewa"), v.literal("fonepay")),
+    ),
+  },
+  handler: async (ctx, args) => {
+    // Look up QR code
+    const qr = await ctx.db
+      .query("autoQrCodes")
+      .withIndex("by_qrCode", (q) => q.eq("qrCode", args.qrCode))
+      .unique();
+    if (!qr || !qr.isActive) throw new Error("Invalid or inactive QR code");
+
+    // Check driver is online and available
+    const driver = await ctx.db.get(qr.driverId);
+    if (!driver) throw new Error("Driver not found");
+    if (!driver.isOnline) throw new Error("Driver is currently offline");
+    if (!driver.isApproved) throw new Error("Driver not approved");
+    if (driver.isSuspended) throw new Error("Driver is suspended");
+
+    // Check driver doesn't have active ride
+    const activeRide = await ctx.db
+      .query("rides")
+      .withIndex("by_driverId", (q) => q.eq("driverId", driver._id))
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("status"), "driver_arriving"),
+          q.eq(q.field("status"), "driver_arrived"),
+          q.eq(q.field("status"), "in_progress"),
+        ),
+      )
+      .first();
+    if (activeRide) throw new Error("Driver is currently on another ride");
+
+    // Check rider doesn't have active request/ride
+    const existingRequest = await ctx.db
+      .query("rideRequests")
+      .withIndex("by_riderId", (q) => q.eq("riderId", args.riderId))
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("status"), "pending"),
+          q.eq(q.field("status"), "matched"),
+        ),
+      )
+      .first();
+    if (existingRequest) throw new Error("You already have an active ride request");
+
+    const vehicle = await ctx.db.get(qr.vehicleId);
+    if (!vehicle) throw new Error("Vehicle not found");
+
+    const now = Date.now();
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
+    // Create ride directly — skip matching entirely
+    const rideId = await ctx.db.insert("rides", {
+      requestId: qr._id as any, // QR code ID as reference
+      riderId: args.riderId,
+      driverId: driver._id,
+      vehicleId: qr.vehicleId,
+      pickupLatitude: args.pickupLatitude,
+      pickupLongitude: args.pickupLongitude,
+      pickupAddress: args.pickupAddress,
+      dropoffLatitude: args.dropoffLatitude,
+      dropoffLongitude: args.dropoffLongitude,
+      dropoffAddress: args.dropoffAddress,
+      status: "driver_arriving",
+      otp,
+      fare: args.estimatedFare,
+      distance: args.estimatedDistance,
+      isPooling: false,
+      isQrRide: true,
+      createdAt: now,
+    });
+
+    return { rideId, otp, driverName: driver.name, vehicle };
+  },
+});
+
 /** Deactivate a QR code */
 export const deactivateQrCode = mutation({
   args: { qrId: v.id("autoQrCodes") },
