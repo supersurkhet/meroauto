@@ -110,6 +110,7 @@ export const getNearbyDrivers = query({
 export const getAllDriverLocations = query({
   args: {},
   handler: async (ctx) => {
+    await requireAuth(ctx);
     const locations = await ctx.db.query("driverLocations").collect();
     const results = [];
 
@@ -133,6 +134,7 @@ export const getAllDriverLocations = query({
 export const subscribeDriverLocation = query({
   args: { driverId: v.id("drivers") },
   handler: async (ctx, { driverId }) => {
+    await requireAuth(ctx);
     const loc = await ctx.db
       .query("driverLocations")
       .withIndex("by_driverId", (q) => q.eq("driverId", driverId))
@@ -152,6 +154,7 @@ export const subscribeDriverLocation = query({
 export const subscribeActiveRides = query({
   args: {},
   handler: async (ctx) => {
+    await requireAuth(ctx);
     const activeRides = await ctx.db
       .query("rides")
       .filter((q) =>
@@ -268,6 +271,7 @@ export const getDriverLocationHistory = query({
 export const removeDriverLocation = mutation({
   args: { driverId: v.id("drivers") },
   handler: async (ctx, { driverId }) => {
+    await requireDriver(ctx);
     const loc = await ctx.db
       .query("driverLocations")
       .withIndex("by_driverId", (q) => q.eq("driverId", driverId))

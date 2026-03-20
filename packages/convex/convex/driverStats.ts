@@ -1,10 +1,12 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
+import { requireAuth } from "./lib/auth";
 
 /** Get driver stats — today's rides, earnings, rating, etc. */
 export const getDriverStats = query({
   args: { driverId: v.id("drivers") },
   handler: async (ctx, { driverId }) => {
+    await requireAuth(ctx);
     const driver = await ctx.db.get(driverId);
     if (!driver) throw new Error("Driver not found");
 
@@ -73,6 +75,7 @@ export const getDriverEarnings = query({
     period: v.union(v.literal("daily"), v.literal("weekly"), v.literal("monthly")),
   },
   handler: async (ctx, { driverId, period }) => {
+    await requireAuth(ctx);
     const driver = await ctx.db.get(driverId);
     if (!driver) throw new Error("Driver not found");
 

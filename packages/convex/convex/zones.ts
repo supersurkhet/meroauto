@@ -24,6 +24,7 @@ export const createZone = mutation({
     radiusKm: v.number(),
   },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     return await ctx.db.insert("zones", {
       ...args,
       isActive: true,
@@ -43,6 +44,7 @@ export const updateZone = mutation({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, { zoneId, ...updates }) => {
+    await requireAdmin(ctx);
     const filtered = Object.fromEntries(
       Object.entries(updates).filter(([_, v]) => v !== undefined),
     );

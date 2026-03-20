@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { requireAuth, requireDriver, requireRider, requireAdmin } from "./lib/auth";
 
 function generateQrCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -17,6 +18,7 @@ export const createQrCode = mutation({
     vehicleId: v.id("vehicles"),
   },
   handler: async (ctx, { driverId, vehicleId }) => {
+    await requireAdmin(ctx);
     // Deactivate existing QR for this vehicle
     const existing = await ctx.db
       .query("autoQrCodes")
@@ -85,7 +87,7 @@ export const getDriverQrCode = query({
 export const createQrRideRequest = mutation({
   args: {
     qrCode: v.string(),
-    riderId: v.id("riders"),
+    riderId: v.optional(v.id("riders")),
     pickupLatitude: v.number(),
     pickupLongitude: v.number(),
     pickupAddress: v.string(),
@@ -99,6 +101,9 @@ export const createQrRideRequest = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const { riderId: authRiderId } = await requireRider(ctx);
+    const riderId = args.riderId ?? authRiderId;
+
     // Look up QR code
     const qr = await ctx.db
       .query("autoQrCodes")
@@ -130,7 +135,7 @@ export const createQrRideRequest = mutation({
     // Check rider doesn't have active request/ride
     const existingRequest = await ctx.db
       .query("rideRequests")
-      .withIndex("by_riderId", (q) => q.eq("riderId", args.riderId))
+      .withIndex("by_riderId", (q) => q.eq("riderId", riderId))
       .filter((q) =>
         q.or(
           q.eq(q.field("status"), "pending"),
@@ -149,7 +154,7 @@ export const createQrRideRequest = mutation({
     // Create ride directly — skip matching entirely
     const rideId = await ctx.db.insert("rides", {
       // QR rides have no rideRequest — requestId is optional for QR rides
-      riderId: args.riderId,
+      riderId,
       driverId: driver._id,
       vehicleId: qr.vehicleId,
       pickupLatitude: args.pickupLatitude,
@@ -175,6 +180,7 @@ export const createQrRideRequest = mutation({
 export const deactivateQrCode = mutation({
   args: { qrId: v.id("autoQrCodes") },
   handler: async (ctx, { qrId }) => {
+    await requireAdmin(ctx);
     await ctx.db.patch(qrId, { isActive: false });
     return qrId;
   },

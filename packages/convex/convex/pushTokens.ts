@@ -1,14 +1,15 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { requireAuth } from "./lib/auth";
 
 /** Save or update a push notification token for a user */
 export const savePushToken = mutation({
   args: {
-    userId: v.string(),
     token: v.string(),
     platform: v.union(v.literal("ios"), v.literal("android"), v.literal("web")),
   },
-  handler: async (ctx, { userId, token, platform }) => {
+  handler: async (ctx, { token, platform }) => {
+    const userId = await requireAuth(ctx);
     // Check if this token already exists
     const existingToken = await ctx.db
       .query("pushTokens")
@@ -39,8 +40,9 @@ export const savePushToken = mutation({
 
 /** Get all push tokens for a user */
 export const getPushTokens = query({
-  args: { userId: v.string() },
-  handler: async (ctx, { userId }) => {
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireAuth(ctx);
     return await ctx.db
       .query("pushTokens")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
@@ -52,6 +54,7 @@ export const getPushTokens = query({
 export const removePushToken = mutation({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
+    await requireAuth(ctx);
     const existing = await ctx.db
       .query("pushTokens")
       .withIndex("by_token", (q) => q.eq("token", token))
@@ -64,8 +67,9 @@ export const removePushToken = mutation({
 
 /** Remove all tokens for a user (on account deletion) */
 export const removeAllUserTokens = mutation({
-  args: { userId: v.string() },
-  handler: async (ctx, { userId }) => {
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireAuth(ctx);
     const tokens = await ctx.db
       .query("pushTokens")
       .withIndex("by_userId", (q) => q.eq("userId", userId))

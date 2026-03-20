@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { requireAuth } from "./lib/auth";
 
 const EARTH_RADIUS_KM = 6371;
 function toRadians(deg: number) {
@@ -26,6 +27,7 @@ export const findPoolableRides = query({
     dropoffLongitude: v.number(),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     // Find rides that are in_progress or driver_arriving with isPooling=true
     const activeRides = await ctx.db
       .query("rides")
@@ -96,7 +98,7 @@ export const findPoolableRides = query({
   },
 });
 
-/** Join a pooled ride — add rider to existing ride, calculate split fare */
+/** Join a pooled ride — auth required */
 export const joinPooledRide = mutation({
   args: {
     rideId: v.id("rides"),
@@ -110,6 +112,7 @@ export const joinPooledRide = mutation({
     fare: v.number(),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const ride = await ctx.db.get(args.rideId);
     if (!ride) throw new Error("Ride not found");
     if (!ride.isPooling) throw new Error("This ride does not support pooling");
