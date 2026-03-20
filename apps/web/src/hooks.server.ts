@@ -2,9 +2,18 @@ import type { Handle } from '@sveltejs/kit';
 import { deserializeSession } from '$lib/server/auth';
 
 export const handle: Handle = async ({ event, resolve }) => {
-	// Parse session from cookie
+	// Parse session and token from cookies
 	const sessionCookie = event.cookies.get('meroauto_session');
 	event.locals.user = sessionCookie ? deserializeSession(sessionCookie) : null;
+	event.locals.token = event.cookies.get('meroauto_token') || null;
+
+	// Protect dashboard routes — redirect to login if not authenticated
+	if (event.url.pathname.startsWith('/dashboard') && !event.locals.user) {
+		return new Response(null, {
+			status: 302,
+			headers: { Location: `/auth/login?returnTo=${encodeURIComponent(event.url.pathname)}` }
+		});
+	}
 
 	const response = await resolve(event, {
 		preload: ({ type }) => type === 'css' || type === 'js' || type === 'font'

@@ -4,12 +4,20 @@
 	import Footer from '$components/Footer.svelte';
 	import { theme } from '$lib/theme';
 	import { browser } from '$app/environment';
+	import { getConvexClient, setConvexAuth } from '$lib/convex';
 
-	let { children } = $props();
+	let { children, data } = $props();
 
+	// Initialize Convex client and set auth token
 	$effect(() => {
 		if (browser) {
 			document.documentElement.classList.toggle('dark', $theme === 'dark');
+
+			// Initialize Convex
+			getConvexClient();
+
+			// Set auth token for Convex if available
+			setConvexAuth(data.token);
 		}
 	});
 </script>
