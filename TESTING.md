@@ -3,19 +3,33 @@
 Every agent MUST update this file with verification entries for every feature they implement.
 
 ## Convex Backend
-- [ ] `createRider` mutation — creates rider record with userId, returns id
-- [ ] `createDriver` mutation — creates driver record, isApproved defaults to false
-- [ ] `updateDriverLocation` mutation — updates lat/lng/heading for driver
-- [ ] `getNearbyDrivers` query — returns online drivers within radius, sorted by distance
-- [ ] `createRideRequest` mutation — creates request with status "pending"
-- [ ] `matchDriver` scheduled action — expands radius 2km→5km→10km, matches nearest online driver
-- [ ] `acceptRideRequest` mutation — creates ride record, updates request to "accepted"
-- [ ] `startRide` mutation — updates ride status to "in_progress"
-- [ ] `completeRide` mutation — updates ride status to "completed", records fare
-- [ ] `estimateFare` query — returns correct NPR amount based on distance + pricing config
-- [ ] `submitRating` mutation — creates rating, updates driver average
-- [ ] `approveDriver` mutation — sets isApproved to true
-- [ ] `suspendDriver` mutation — sets isSuspended to true
+- [x] `createRider` mutation — creates rider record with userId, returns id (users.ts)
+- [x] `createDriver` mutation — creates driver record, isApproved defaults to false (users.ts)
+- [x] `updateDriverLocation` mutation — updates lat/lng/heading for driver (locations.ts)
+- [x] `getNearbyDrivers` query — returns online drivers within radius, sorted by distance (locations.ts)
+- [x] `createRideRequest` mutation — creates request with status "pending", schedules matching (rideRequests.ts)
+- [x] `matchDriver` scheduled action — expands radius 2km→5km→10km, matches nearest online driver (matching.ts)
+- [x] `acceptRideRequest` mutation — creates ride record, updates request to "accepted" (rides.ts)
+- [x] `startRide` mutation — updates ride status to "in_progress" (rides.ts)
+- [x] `completeRide` mutation — updates ride status to "completed", records fare + driver stats (rides.ts)
+- [x] `estimateFare` query — returns correct NPR amount based on distance + zone pricing (pricing.ts)
+- [x] `submitRating` mutation — creates rating, updates driver average (ratings.ts)
+- [x] `approveDriver` mutation — sets isApproved to true (admin.ts)
+- [x] `suspendDriver` mutation — sets isSuspended to true, sets isOnline to false (admin.ts)
+- [x] `cancelRideRequest` mutation — cancels pending/matched requests, releases driver (rideRequests.ts)
+- [x] `cancelRide` mutation — cancels active ride with reason (rides.ts)
+- [x] `driverArrived` mutation — transitions ride to driver_arrived (rides.ts)
+- [x] `createPayment` mutation — records payment, cash auto-completes (payments.ts)
+- [x] `completePayment` mutation — marks digital payment as completed (payments.ts)
+- [x] `getDashboardStats` query — rides/drivers/riders/revenue stats (admin.ts)
+- [x] `getRevenueReport` query — revenue by date range and payment method (admin.ts)
+- [x] `getActiveRides` query — enriched active rides with driver locations (admin.ts)
+- [x] `createZone` / `updateZone` mutations — zone CRUD (zones.ts)
+- [x] `getZoneForLocation` query — finds zone containing lat/lng (zones.ts)
+- [x] `lookupQrCode` query — QR → driver + vehicle info (qrCodes.ts)
+- [x] `registerVehicle` mutation — vehicle registration (vehicles.ts)
+- [x] `seedDefaults` mutation — seeds Surkhet zones + default pricing (seed.ts)
+- [x] `haversineDistance` utility — shared geo calculation (packages/shared/src/geo.ts)
 
 ## Auth
 - [ ] Rider login — WorkOS redirect, returns to app authenticated
