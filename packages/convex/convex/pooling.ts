@@ -175,25 +175,20 @@ export const getPoolRiders = query({
 
     // Also include the original rider from the ride
     const ride = await ctx.db.get(rideId);
+    let originalRiderInfo = null;
     if (ride) {
       const originalRider = await ctx.db.get(ride.riderId);
-      results.unshift({
-        _id: "original" as any,
-        rideId,
+      originalRiderInfo = {
         riderId: ride.riderId,
-        pickupLatitude: ride.pickupLatitude,
-        pickupLongitude: ride.pickupLongitude,
-        pickupAddress: ride.pickupAddress,
-        dropoffLatitude: ride.dropoffLatitude,
-        dropoffLongitude: ride.dropoffLongitude,
-        dropoffAddress: ride.dropoffAddress,
-        fare: ride.fare,
-        joinedAt: ride.createdAt,
         riderName: originalRider?.name ?? "Unknown",
         riderPhone: originalRider?.phone,
-      });
+        pickupAddress: ride.pickupAddress,
+        dropoffAddress: ride.dropoffAddress,
+        fare: ride.fare,
+        isOriginal: true,
+      };
     }
 
-    return results;
+    return { originalRider: originalRiderInfo, poolRiders: results };
   },
 });

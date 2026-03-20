@@ -90,7 +90,7 @@ export default defineSchema({
     .index("by_createdAt", ["createdAt"]),
 
   rides: defineTable({
-    requestId: v.id("rideRequests"),
+    requestId: v.optional(v.id("rideRequests")),
     riderId: v.id("riders"),
     driverId: v.id("drivers"),
     vehicleId: v.id("vehicles"),

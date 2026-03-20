@@ -148,7 +148,7 @@ export const createQrRideRequest = mutation({
 
     // Create ride directly — skip matching entirely
     const rideId = await ctx.db.insert("rides", {
-      requestId: qr._id as any, // QR code ID as reference
+      // QR rides have no rideRequest — requestId is optional for QR rides
       riderId: args.riderId,
       driverId: driver._id,
       vehicleId: qr.vehicleId,
