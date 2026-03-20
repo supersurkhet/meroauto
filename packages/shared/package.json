@@ -1,0 +1,12 @@
+{
+  "name": "@meroauto/shared",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "biome check .",
+    "check": "tsc --noEmit"
+  }
+}

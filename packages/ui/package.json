@@ -1,0 +1,13 @@
+{
+  "name": "@meroauto/ui",
+  "private": true,
+  "type": "module",
+  "svelte": "./src/index.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "echo 'no build needed'",
+    "lint": "biome check .",
+    "check": "svelte-check"
+  }
+}

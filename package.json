@@ -1,0 +1,17 @@
+{
+  "name": "meroauto",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "check": "turbo check"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.8",
+    "@playwright/test": "^1.58.2",
+    "turbo": "^2.8.20"
+  }
+}
