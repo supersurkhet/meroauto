@@ -1,14 +1,37 @@
 <script lang="ts">
   import "../app.css";
+  import { onMount } from "svelte";
   import { page } from "$app/stores";
+  import { goto } from "$app/navigation";
   import { t, locale } from "$lib/i18n";
   import { cn } from "$lib/utils";
   import ErrorBoundary from "$lib/components/error-boundary.svelte";
+  import { currentUser, isAuthenticated, authLoading, fetchUser, signOut } from "$lib/stores/auth";
+  import { USE_CONVEX } from "$lib/convex";
 
   let { children } = $props();
 
   let sidebarCollapsed = $state(false);
   let darkMode = $state(false);
+
+  // Auth check on mount
+  onMount(async () => {
+    if (USE_CONVEX) {
+      await fetchUser();
+    } else {
+      // No Convex = dev mode, auto-authenticate
+      isAuthenticated.set(true);
+      authLoading.set(false);
+    }
+  });
+
+  // Auth gate: redirect to login if not authenticated (skip auth routes)
+  const isAuthRoute = $derived($page.url.pathname.startsWith("/auth"));
+  $effect(() => {
+    if (!$authLoading && !$isAuthenticated && !isAuthRoute) {
+      goto("/auth/login");
+    }
+  });
 
   function toggleDark() {
     darkMode = !darkMode;
@@ -36,6 +59,16 @@
   }
 </script>
 
+{#if $authLoading}
+  <div class="flex h-screen items-center justify-center bg-background">
+    <div class="text-center">
+      <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto"></div>
+      <p class="mt-4 text-sm text-muted-foreground">Loading...</p>
+    </div>
+  </div>
+{:else if isAuthRoute || !$isAuthenticated}
+  {@render children()}
+{:else}
 <div class="flex h-screen overflow-hidden bg-background">
   <!-- Sidebar -->
   <aside
@@ -123,6 +156,17 @@
         {/if}
       </button>
       <button
+        onclick={() => signOut()}
+        class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+      >
+        <span class="shrink-0 w-5 text-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </span>
+        {#if !sidebarCollapsed}
+          <span>Sign Out</span>
+        {/if}
+      </button>
+      <button
         onclick={() => (sidebarCollapsed = !sidebarCollapsed)}
         class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
       >
@@ -145,3 +189,4 @@
     </div>
   </main>
 </div>
+{/if}
