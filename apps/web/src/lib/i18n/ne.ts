@@ -6,7 +6,8 @@ export default {
 		about: 'हाम्रो बारेमा',
 		contact: 'सम्पर्क',
 		register: 'चालक बन्नुहोस्',
-		coverage: 'सेवा क्षेत्र'
+		coverage: 'सेवा क्षेत्र',
+		download: 'डाउनलोड'
 	},
 	hero: {
 		title: 'तपाईंको अटो रिक्सा,',
@@ -136,5 +137,28 @@ export default {
 		language: 'भाषा',
 		nepali: 'नेपाली',
 		english: 'English'
+	},
+	download: {
+		title: 'MeroAuto डाउनलोड गर्नुहोस्',
+		subtitle: 'तपाईंको उपकरणको लागि एप पाउनुहोस्। यात्रु, चालक र प्रशासक — सबै एक इकोसिस्टममा।',
+		detected: 'पत्ता लागेको:',
+		downloadFor: 'को लागि डाउनलोड गर्नुहोस्',
+		download: 'डाउनलोड',
+		comingSoon: 'चाँडै आउँदैछ',
+		testflight: 'iOS मा पहिलो पहुँचको लागि TestFlight बीटामा सामेल हुनुहोस्।',
+		allReleases: 'GitHub मा सबै रिलिजहरू हेर्नुहोस्',
+		otherPlatforms: 'अन्य प्लेटफर्महरूमा उपलब्ध',
+		mobileApps: 'मोबाइल एपहरू',
+		mobileAppsDesc: 'अटो रिक्सा बुकिङको लागि यात्रु र चालक एपहरू।',
+		getItOn: 'मा पाउनुहोस्',
+		downloadOnThe: 'मा डाउनलोड गर्नुहोस्',
+		storeNote: 'स्टोर सूची चाँडै आउँदैछ। अहिलेको लागि APK सीधा डाउनलोड गर्नुहोस्।',
+		featureFast: 'हल्का र छिटो',
+		featureFastDesc: '१५ MB भन्दा कम। सेकेन्डमा इन्स्टल हुन्छ, बजेट फोनमा पनि सहज चल्छ।',
+		featureSecure: 'सुरक्षित र निजी',
+		featureSecureDesc: 'एन्ड-टु-एन्ड इन्क्रिप्टेड सवारी। तपाईंको डेटा तपाईंको उपकरणमा रहन्छ।',
+		featureRated: 'उच्च मूल्याङ्कित',
+		featureRatedDesc: 'सुर्खेतका ५,०००+ यात्रुहरूबाट ४.७★ औसत मूल्याङ्कन।',
+		sysReq: 'प्रणाली आवश्यकताहरू'
 	}
 };

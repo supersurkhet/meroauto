@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import { t, locale, type Locale } from '$i18n';
 	import { theme } from '$lib/theme';
-	import { Sun, Moon, Globe, Menu, X } from 'lucide-svelte';
+	import { Sun, Moon, Globe, Menu, X, Download } from 'lucide-svelte';
 
 	let mobileOpen = $state(false);
 
@@ -51,8 +51,9 @@
 					<Moon class="h-5 w-5" />
 				{/if}
 			</button>
-			<a href="/register" class="hidden rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark sm:inline-flex">
-				{$t('nav.register')}
+			<a href="/download" class="hidden items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark sm:inline-flex">
+				<Download class="h-4 w-4" />
+				{$t('nav.download')}
 			</a>
 			<button onclick={() => (mobileOpen = !mobileOpen)} class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 md:hidden dark:text-gray-400 dark:hover:bg-gray-800" aria-label="Menu">
 				{#if mobileOpen}
@@ -77,8 +78,8 @@
 					{$t(link.key)}
 				</a>
 			{/each}
-			<a href="/register" onclick={() => (mobileOpen = false)} class="mt-2 block rounded-lg bg-brand px-3 py-2 text-center text-base font-semibold text-white hover:bg-brand-dark">
-				{$t('nav.register')}
+			<a href="/download" onclick={() => (mobileOpen = false)} class="mt-2 block rounded-lg bg-brand px-3 py-2 text-center text-base font-semibold text-white hover:bg-brand-dark">
+				{$t('nav.download')}
 			</a>
 		</div>
 	{/if}

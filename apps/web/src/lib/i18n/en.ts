@@ -137,5 +137,28 @@ export default {
 		language: 'Language',
 		nepali: 'नेपाली',
 		english: 'English'
+	},
+	download: {
+		title: 'Download MeroAuto',
+		subtitle: 'Get the app for your device. Riders, drivers, and admins — all in one ecosystem.',
+		detected: 'Detected:',
+		downloadFor: 'Download for',
+		download: 'Download',
+		comingSoon: 'Coming Soon',
+		testflight: 'Join the TestFlight beta for early access on iOS.',
+		allReleases: 'View all releases on GitHub',
+		otherPlatforms: 'Available on other platforms',
+		mobileApps: 'Mobile Apps',
+		mobileAppsDesc: 'Rider and driver apps for on-the-go auto-rickshaw booking.',
+		getItOn: 'Get it on',
+		downloadOnThe: 'Download on the',
+		storeNote: 'Store listings coming soon. Download APK directly for now.',
+		featureFast: 'Lightweight & Fast',
+		featureFastDesc: 'Under 15 MB. Installs in seconds, runs smoothly even on budget phones.',
+		featureSecure: 'Secure & Private',
+		featureSecureDesc: 'End-to-end encrypted rides. Your data stays on your device.',
+		featureRated: 'Top Rated',
+		featureRatedDesc: '4.7★ average rating from 5,000+ riders in Surkhet.',
+		sysReq: 'System Requirements'
 	}
 };
