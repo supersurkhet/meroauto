@@ -188,6 +188,21 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_name", ["name"]),
 
+  poolRiders: defineTable({
+    rideId: v.id("rides"),
+    riderId: v.id("riders"),
+    pickupLatitude: v.number(),
+    pickupLongitude: v.number(),
+    pickupAddress: v.string(),
+    dropoffLatitude: v.number(),
+    dropoffLongitude: v.number(),
+    dropoffAddress: v.string(),
+    fare: v.number(),
+    joinedAt: v.number(),
+  })
+    .index("by_rideId", ["rideId"])
+    .index("by_riderId", ["riderId"]),
+
   pushTokens: defineTable({
     userId: v.string(),
     token: v.string(),
