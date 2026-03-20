@@ -1,37 +1,39 @@
 /**
- * Reactive data layer — 100% wired to Convex backend.
- *
- * VITE_CONVEX_URL set → real Convex queries/mutations
- * VITE_CONVEX_URL unset → local mock data for development
+ * Reactive data layer — wired to Convex backend.
+ * All stores initialize empty and are populated via Convex queries.
  */
 import { writable, derived, get } from "svelte/store";
 import { USE_CONVEX, query, mutate } from "$lib/convex";
-import {
-  mockDrivers, mockVehicles, mockRides, mockLocations,
-  mockPricing, mockQrCodes, mockZones, mockPayments, mockUsers,
-  mockDashboardStats, mockHourlyData, mockDriverUtilization,
-  type Driver, type Vehicle, type Ride, type DriverLocation,
-  type PricingRule, type QrCode, type Zone, type Payment, type AdminUser,
-  type DashboardStats, type HourlyData, type DriverUtilization, type FareEstimate,
-} from "./mock-data";
+import type {
+  Driver, Vehicle, Ride, DriverLocation,
+  PricingRule, QrCode, Zone, Payment, AdminUser,
+  DashboardStats, HourlyData, DriverUtilization, FareEstimate,
+} from "./types";
 
 // Re-export types
 export type { Driver, Vehicle, Ride, DriverLocation, PricingRule, QrCode, Zone, Payment, AdminUser, DashboardStats, HourlyData, DriverUtilization, FareEstimate };
 
+const emptyStats: DashboardStats = {
+  rides: { total: 0, today: 0, thisWeek: 0, active: 0, completed: 0 },
+  drivers: { total: 0, online: 0, approved: 0, pendingApproval: 0 },
+  riders: { total: 0 },
+  revenue: { today: 0, thisWeek: 0, total: 0 },
+};
+
 // ── Stores ──────────────────────────────────────────────────────────
 
-export const drivers = writable<Driver[]>(mockDrivers);
-export const vehicles = writable<Vehicle[]>(mockVehicles);
-export const rides = writable<Ride[]>(mockRides);
-export const driverLocations = writable<DriverLocation[]>(mockLocations);
-export const pricingRules = writable<PricingRule[]>(mockPricing);
-export const qrCodes = writable<QrCode[]>(mockQrCodes);
-export const zones = writable<Zone[]>(mockZones);
-export const payments = writable<Payment[]>(mockPayments);
-export const users = writable<AdminUser[]>(mockUsers);
-export const dashboardStats = writable<DashboardStats>(mockDashboardStats);
-export const hourlyData = writable<HourlyData[]>(mockHourlyData);
-export const driverUtilization = writable<DriverUtilization[]>(mockDriverUtilization);
+export const drivers = writable<Driver[]>([]);
+export const vehicles = writable<Vehicle[]>([]);
+export const rides = writable<Ride[]>([]);
+export const driverLocations = writable<DriverLocation[]>([]);
+export const pricingRules = writable<PricingRule[]>([]);
+export const qrCodes = writable<QrCode[]>([]);
+export const zones = writable<Zone[]>([]);
+export const payments = writable<Payment[]>([]);
+export const users = writable<AdminUser[]>([]);
+export const dashboardStats = writable<DashboardStats>(emptyStats);
+export const hourlyData = writable<HourlyData[]>([]);
+export const driverUtilization = writable<DriverUtilization[]>([]);
 
 export const loading = writable(false);
 export const error = writable<string | null>(null);
@@ -174,30 +176,17 @@ export async function refreshAll() {
 // ── Mutations: Drivers ──────────────────────────────────────────────
 
 export async function approveDriver(driverId: string) {
-  if (USE_CONVEX) {
-    await mutate("drivers:approve", { driverId });
-    await refreshDrivers();
-  } else {
-    drivers.update((ds) => ds.map((d) => (d._id === driverId ? { ...d, isApproved: true } : d)));
-  }
+  await mutate("drivers:approve", { driverId });
+  await refreshDrivers();
 }
 
 export async function suspendDriver(driverId: string, suspended: boolean) {
-  if (USE_CONVEX) {
-    await mutate("drivers:suspend", { driverId, suspended });
-    await refreshDrivers();
-  } else {
-    drivers.update((ds) =>
-      ds.map((d) => d._id === driverId ? { ...d, isSuspended: suspended, status: suspended ? "offline" as const : "available" as const } : d)
-    );
-  }
+  await mutate("drivers:suspend", { driverId, suspended });
+  await refreshDrivers();
 }
 
 export async function getDriverById(driverId: string) {
-  if (USE_CONVEX) {
-    return await query<Driver & { user?: AdminUser; vehicle?: Vehicle }>("drivers:getById", { driverId });
-  }
-  return get(drivers).find((d) => d._id === driverId) ?? null;
+  return await query<Driver & { user?: AdminUser; vehicle?: Vehicle }>("drivers:getById", { driverId });
 }
 
 // ── Mutations: Pricing ──────────────────────────────────────────────
@@ -206,12 +195,8 @@ export async function updatePricingRule(
   pricingId: string,
   updates: { baseFare?: number; perKmRate?: number; perMinuteRate?: number; minimumFare?: number; surgeMultiplier?: number }
 ) {
-  if (USE_CONVEX) {
-    await mutate("pricing:updatePricingRule", { pricingId, ...updates });
-    await refreshPricing();
-  } else {
-    pricingRules.update((ps) => ps.map((p) => (p._id === pricingId ? { ...p, ...updates } : p)));
-  }
+  await mutate("pricing:updatePricingRule", { pricingId, ...updates });
+  await refreshPricing();
 }
 
 export async function createPricingRule(args: {
@@ -224,68 +209,33 @@ export async function createPricingRule(args: {
   surgeMultiplier?: number;
   isDefault?: boolean;
 }) {
-  if (USE_CONVEX) {
-    await mutate("pricing:createPricingRule", args);
-    await refreshPricing();
-  } else {
-    pricingRules.update((ps) => [
-      ...ps,
-      { _id: `p${Date.now()}`, ...args, surgeMultiplier: args.surgeMultiplier ?? 1.0, zoneName: "New Rule", createdAt: Date.now() },
-    ]);
-  }
+  await mutate("pricing:createPricingRule", args);
+  await refreshPricing();
 }
 
 export async function setSurgeMultiplier(zoneId: string | undefined, multiplier: number) {
-  if (USE_CONVEX) {
-    const args: Record<string, unknown> = { multiplier };
-    if (zoneId) args.zoneId = zoneId;
-    await mutate("pricing:setSurgeMultiplier", args);
-    await refreshPricing();
-  } else {
-    pricingRules.update((ps) =>
-      ps.map((p) => (zoneId ? p.zoneId === zoneId : !p.zoneId) ? { ...p, surgeMultiplier: multiplier } : p)
-    );
-  }
+  const args: Record<string, unknown> = { multiplier };
+  if (zoneId) args.zoneId = zoneId;
+  await mutate("pricing:setSurgeMultiplier", args);
+  await refreshPricing();
 }
 
 export async function estimateFare(pickupLat: number, pickupLng: number, dropoffLat: number, dropoffLng: number, vehicleType?: string): Promise<FareEstimate> {
-  if (USE_CONVEX) {
-    const args: Record<string, unknown> = { pickupLat, pickupLng, dropoffLat, dropoffLng };
-    if (vehicleType) args.vehicleType = vehicleType;
-    return await query<FareEstimate>("pricing:estimateFare", args);
-  }
-  const dist = Math.sqrt((pickupLat - dropoffLat) ** 2 + (pickupLng - dropoffLng) ** 2) * 111;
-  const dur = (dist / 20) * 60;
-  const fare = Math.round(50 + dist * 25 + dur * 3);
-  return { fare, distance: Math.round(dist * 100) / 100, estimatedDuration: Math.round(dur), surgeMultiplier: 1, zone: null, breakdown: { baseFare: 50, distanceCharge: Math.round(dist * 25), timeCharge: Math.round(dur * 3), surgeCharge: 0 } };
+  const args: Record<string, unknown> = { pickupLat, pickupLng, dropoffLat, dropoffLng };
+  if (vehicleType) args.vehicleType = vehicleType;
+  return await query<FareEstimate>("pricing:estimateFare", args);
 }
 
 // ── Mutations: QR Codes ─────────────────────────────────────────────
 
 export async function generateQrCode(driverId: string, vehicleId: string) {
-  if (USE_CONVEX) {
-    await mutate("qr:generate", { driverId, vehicleId });
-    await refreshQrCodes();
-  } else {
-    const driver = get(drivers).find((d) => d._id === driverId);
-    const vehicle = get(vehicles).find((v) => v._id === vehicleId);
-    const code = `MA-${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
-    qrCodes.update((qs) => [...qs, {
-      _id: `qr${Date.now()}`, driverId, vehicleId, code,
-      driverName: driver?.name,
-      vehicle: vehicle ? { registrationNumber: vehicle.registrationNumber, type: vehicle.type, color: vehicle.color } : undefined,
-      isActive: true, scans: 0, createdAt: Date.now(),
-    }]);
-  }
+  await mutate("qr:generate", { driverId, vehicleId });
+  await refreshQrCodes();
 }
 
 export async function deactivateQrCode(qrId: string) {
-  if (USE_CONVEX) {
-    await mutate("qr:deactivate", { qrId });
-    await refreshQrCodes();
-  } else {
-    qrCodes.update((qs) => qs.map((q) => (q._id === qrId ? { ...q, isActive: false } : q)));
-  }
+  await mutate("qr:deactivate", { qrId });
+  await refreshQrCodes();
 }
 
 // ── Mutations: Zones ────────────────────────────────────────────────
@@ -294,66 +244,39 @@ export async function createZone(args: {
   name: string; nameNe?: string; centerLat: number; centerLng: number;
   radiusKm: number; baseFare: number; perKmRate: number; minimumFare: number;
 }) {
-  if (USE_CONVEX) {
-    await mutate("zones:create", args);
-    await refreshZones();
-  } else {
-    zones.update((zs) => [...zs, {
-      _id: `z${Date.now()}`, name: args.name, nameNe: args.nameNe,
-      center: { lat: args.centerLat, lng: args.centerLng },
-      radiusKm: args.radiusKm, baseFare: args.baseFare, perKmRate: args.perKmRate,
-      minimumFare: args.minimumFare, surgeMultiplier: 1.0, isActive: true, createdAt: Date.now(),
-    }]);
-  }
+  await mutate("zones:create", args);
+  await refreshZones();
 }
 
 export async function updateZone(zoneId: string, updates: Record<string, unknown>) {
-  if (USE_CONVEX) {
-    await mutate("zones:update", { zoneId, ...updates });
-    await refreshZones();
-  } else {
-    zones.update((zs) => zs.map((z) => (z._id === zoneId ? { ...z, ...updates } : z)));
-  }
+  await mutate("zones:update", { zoneId, ...updates });
+  await refreshZones();
 }
 
 export async function removeZone(zoneId: string) {
-  if (USE_CONVEX) {
-    await mutate("zones:remove", { zoneId });
-    await refreshZones();
-  } else {
-    zones.update((zs) => zs.map((z) => (z._id === zoneId ? { ...z, isActive: false } : z)));
-  }
+  await mutate("zones:remove", { zoneId });
+  await refreshZones();
 }
 
 // ── Mutations: Payments ─────────────────────────────────────────────
 
 export async function refundPayment(paymentId: string) {
-  if (USE_CONVEX) {
-    await mutate("payments:refundPayment", { paymentId });
-    await refreshPayments();
-  } else {
-    payments.update((ps) => ps.map((p) => (p._id === paymentId ? { ...p, status: "refunded" as const } : p)));
-  }
+  await mutate("payments:refundPayment", { paymentId });
+  await refreshPayments();
 }
 
 // ── Mutations: Users ────────────────────────────────────────────────
 
 export async function setUserRole(userId: string, role: "rider" | "driver" | "admin") {
-  if (USE_CONVEX) {
-    await mutate("users:setRole", { userId, role });
-    await refreshUsers();
-  } else {
-    users.update((us) => us.map((u) => (u._id === userId ? { ...u, role } : u)));
-  }
+  await mutate("users:setRole", { userId, role });
+  await refreshUsers();
 }
 
 // ── Mutations: Seed ─────────────────────────────────────────────────
 
 export async function seedDefaults() {
-  if (USE_CONVEX) {
-    await mutate("seed:seedDefaults", {});
-    await refreshAll();
-  }
+  await mutate("seed:seedDefaults", {});
+  await refreshAll();
 }
 
 // ── Derived stores ──────────────────────────────────────────────────

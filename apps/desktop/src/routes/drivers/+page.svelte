@@ -3,7 +3,7 @@
   import { t } from "$lib/i18n";
   import { drivers, refreshDrivers, approveDriver, suspendDriver } from "$lib/stores/data";
   import { formatCurrency, formatDate, cn } from "$lib/utils";
-  import type { Driver } from "$lib/stores/mock-data";
+  import type { Driver } from "$lib/stores/types";
 
   onMount(() => { refreshDrivers(); });
 

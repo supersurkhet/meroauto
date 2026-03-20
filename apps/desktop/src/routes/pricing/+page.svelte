@@ -3,7 +3,7 @@
   import { t } from "$lib/i18n";
   import { pricingRules, refreshPricing, updatePricingRule, createPricingRule } from "$lib/stores/data";
   import { formatCurrency, cn } from "$lib/utils";
-  import type { PricingRule } from "$lib/stores/mock-data";
+  import type { PricingRule } from "$lib/stores/types";
 
   onMount(() => { refreshPricing(); });
 

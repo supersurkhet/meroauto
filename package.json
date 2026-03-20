@@ -9,6 +9,7 @@
     "test": "turbo test",
     "check": "turbo check"
   },
+  "packageManager": "bun@1.2.15",
   "devDependencies": {
     "@biomejs/biome": "^2.4.8",
     "@playwright/test": "^1.58.2",
