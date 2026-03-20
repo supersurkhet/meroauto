@@ -36,9 +36,12 @@
 	let mapContainer: HTMLDivElement;
 	let map: any;
 
-	onMount(async () => {
+	onMount(() => {
 		if (!browser) return;
 
+		let styleEl: HTMLStyleElement;
+
+		const init = async () => {
 		const L = await import('leaflet');
 
 		map = L.map(mapContainer).setView(center, zoom);
@@ -108,19 +111,22 @@
 		}
 
 		// Add pulse animation style
-		const style = document.createElement('style');
-		style.textContent = `
+		styleEl = document.createElement('style');
+		styleEl.textContent = `
 			@keyframes pulse {
 				0%, 100% { transform: scale(1); opacity: 1; }
 				50% { transform: scale(1.2); opacity: 0.8; }
 			}
 			.custom-marker { background: transparent !important; border: none !important; }
 		`;
-		document.head.appendChild(style);
+		document.head.appendChild(styleEl);
+		};
+
+		init();
 
 		return () => {
 			map?.remove();
-			style.remove();
+			styleEl?.remove();
 		};
 	});
 </script>

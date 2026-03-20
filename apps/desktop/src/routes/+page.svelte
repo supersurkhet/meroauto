@@ -1,10 +1,12 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { t } from "$lib/i18n";
-  import { dashboardStats, hourlyData, driverUtilization, dailyRideData, refreshDashboard } from "$lib/stores/data";
+  import { dashboardStats, hourlyData, driverUtilization, dailyRideData, loading, refreshDashboard } from "$lib/stores/data";
   import { formatCurrency } from "$lib/utils";
+  import DashboardSkeleton from "$lib/components/dashboard-skeleton.svelte";
 
-  onMount(() => { refreshDashboard(); });
+  let initialLoad = $state(true);
+  onMount(async () => { await refreshDashboard(); initialLoad = false; });
 
   const statCards = $derived([
     { label: $t("dashboard.totalRides"), value: $dashboardStats.rides.total, trend: "+12%" },
@@ -39,6 +41,9 @@
   }
 </script>
 
+{#if initialLoad && $loading}
+  <DashboardSkeleton />
+{:else}
 <div class="space-y-6">
   <div>
     <h1 class="text-2xl font-bold tracking-tight">{$t("dashboard.title")}</h1>
@@ -130,3 +135,4 @@
     </div>
   </div>
 </div>
+{/if}

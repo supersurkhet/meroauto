@@ -1,11 +1,9 @@
 <script lang="ts">
   import "../app.css";
   import { page } from "$app/stores";
-  import { goto } from "$app/navigation";
   import { t, locale } from "$lib/i18n";
-  import { currentUser, signOut } from "$lib/stores/auth";
-  import { stats } from "$lib/stores/mock-data";
   import { cn } from "$lib/utils";
+  import ErrorBoundary from "$lib/components/error-boundary.svelte";
 
   let { children } = $props();
 
@@ -138,7 +136,9 @@
   <!-- Main content -->
   <main class="flex-1 overflow-y-auto">
     <div class="p-6">
-      {@render children()}
+      <ErrorBoundary>
+        {@render children()}
+      </ErrorBoundary>
     </div>
   </main>
 </div>
