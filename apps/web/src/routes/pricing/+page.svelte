@@ -2,6 +2,7 @@
 	import { t } from '$i18n';
 	import { Calculator, MapPin, ArrowRight, Info, TrendingDown } from 'lucide-svelte';
 	import { surkhetLocations, haversineDistance, estimateRoadDistance, calculateFare, getZone } from '$lib/locations';
+	import { Select, Label } from '$lib/components/ui';
 
 	const selectableLocations = surkhetLocations.filter((l) => l.type !== 'coming-soon');
 
@@ -114,15 +115,15 @@
 
 			<div class="grid gap-4 sm:grid-cols-[1fr_auto_1fr]">
 				<div>
-					<label for="from" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{$t('pricing.from')}</label>
+					<Label for="from">{$t('pricing.from')}</Label>
 					<div class="relative">
-						<MapPin class="pointer-events-none absolute top-3 left-3 h-5 w-5 text-brand" />
-						<select id="from" bind:value={fromIndex} onchange={doCalculate} class="w-full appearance-none rounded-xl border border-gray-300 bg-white py-2.5 pr-4 pl-10 text-gray-900 focus:border-brand focus:ring-2 focus:ring-brand/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+						<MapPin class="pointer-events-none absolute top-3 left-3 z-10 h-5 w-5 text-brand" />
+						<Select id="from" bind:value={fromIndex} onchange={doCalculate} class="pl-10">
 							<option value={null} disabled selected>Select pickup</option>
 							{#each selectableLocations as loc, i}
 								<option value={i} disabled={i === toIndex}>{loc.name}</option>
 							{/each}
-						</select>
+						</Select>
 					</div>
 				</div>
 
@@ -135,15 +136,15 @@
 				</div>
 
 				<div>
-					<label for="to" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{$t('pricing.to')}</label>
+					<Label for="to">{$t('pricing.to')}</Label>
 					<div class="relative">
-						<MapPin class="pointer-events-none absolute top-3 left-3 h-5 w-5 text-red-500" />
-						<select id="to" bind:value={toIndex} onchange={doCalculate} class="w-full appearance-none rounded-xl border border-gray-300 bg-white py-2.5 pr-4 pl-10 text-gray-900 focus:border-brand focus:ring-2 focus:ring-brand/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+						<MapPin class="pointer-events-none absolute top-3 left-3 z-10 h-5 w-5 text-red-500" />
+						<Select id="to" bind:value={toIndex} onchange={doCalculate} class="pl-10">
 							<option value={null} disabled selected>Select destination</option>
 							{#each selectableLocations as loc, i}
 								<option value={i} disabled={i === fromIndex}>{loc.name}</option>
 							{/each}
-						</select>
+						</Select>
 					</div>
 				</div>
 			</div>

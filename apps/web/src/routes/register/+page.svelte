@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { t } from '$i18n';
 	import { User, Car, FileText, CheckCircle, Upload, ArrowLeft, ArrowRight, AlertCircle, X, Image, Phone, Mail, MapPin, Calendar, Palette, LogIn, LogOut, Shield } from 'lucide-svelte';
+	import { Input, Select, Checkbox, Label } from '$lib/components/ui';
 
 	let { data } = $props();
 
@@ -314,38 +315,32 @@
 					<div class="space-y-5">
 						<div class="grid gap-4 sm:grid-cols-2">
 							<div>
-								<label for="firstName" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{$t('register.firstName')} <span class="text-red-500">*</span></label>
-								<input id="firstName" type="text" bind:value={form.firstName} class="w-full rounded-xl border px-4 py-2.5 {errors['firstName'] ? 'border-red-500 ring-2 ring-red-500/20' : 'border-gray-300 dark:border-gray-600'} dark:bg-gray-700 dark:text-white" />
+								<Label for="firstName">{$t('register.firstName')} <span class="text-red-500">*</span></Label>
+								<Input id="firstName" type="text" bind:value={form.firstName} variant={errors['firstName'] ? 'error' : 'default'} />
 								{#if errors['firstName']}<p class="mt-1 flex items-center gap-1 text-xs text-red-500"><AlertCircle class="h-3 w-3" />{errors['firstName']}</p>{/if}
 							</div>
 							<div>
-								<label for="lastName" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{$t('register.lastName')} <span class="text-red-500">*</span></label>
-								<input id="lastName" type="text" bind:value={form.lastName} class="w-full rounded-xl border px-4 py-2.5 {errors['lastName'] ? 'border-red-500 ring-2 ring-red-500/20' : 'border-gray-300 dark:border-gray-600'} dark:bg-gray-700 dark:text-white" />
+								<Label for="lastName">{$t('register.lastName')} <span class="text-red-500">*</span></Label>
+								<Input id="lastName" type="text" bind:value={form.lastName} variant={errors['lastName'] ? 'error' : 'default'} />
 								{#if errors['lastName']}<p class="mt-1 flex items-center gap-1 text-xs text-red-500"><AlertCircle class="h-3 w-3" />{errors['lastName']}</p>{/if}
 							</div>
 						</div>
 
 						<div>
-							<label for="phone" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-								<span class="flex items-center gap-1"><Phone class="h-3.5 w-3.5" /> {$t('register.phone')} <span class="text-red-500">*</span></span>
-							</label>
-							<input id="phone" type="tel" bind:value={form.phone} placeholder="+977-98XXXXXXXX" class="w-full rounded-xl border px-4 py-2.5 {errors['phone'] ? 'border-red-500 ring-2 ring-red-500/20' : 'border-gray-300 dark:border-gray-600'} dark:bg-gray-700 dark:text-white" />
+							<Label for="phone"><span class="flex items-center gap-1"><Phone class="h-3.5 w-3.5" /> {$t('register.phone')} <span class="text-red-500">*</span></span></Label>
+							<Input id="phone" type="tel" bind:value={form.phone} placeholder="+977-98XXXXXXXX" variant={errors['phone'] ? 'error' : 'default'} />
 							{#if errors['phone']}<p class="mt-1 flex items-center gap-1 text-xs text-red-500"><AlertCircle class="h-3 w-3" />{errors['phone']}</p>{/if}
 						</div>
 
 						<div>
-							<label for="registerEmail" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-								<span class="flex items-center gap-1"><Mail class="h-3.5 w-3.5" /> {$t('register.email')}</span>
-							</label>
-							<input id="registerEmail" type="email" bind:value={form.email} class="w-full rounded-xl border px-4 py-2.5 {errors['email'] ? 'border-red-500 ring-2 ring-red-500/20' : 'border-gray-300 dark:border-gray-600'} dark:bg-gray-700 dark:text-white" />
+							<Label for="registerEmail"><span class="flex items-center gap-1"><Mail class="h-3.5 w-3.5" /> {$t('register.email')}</span></Label>
+							<Input id="registerEmail" type="email" bind:value={form.email} variant={errors['email'] ? 'error' : 'default'} />
 							{#if errors['email']}<p class="mt-1 flex items-center gap-1 text-xs text-red-500"><AlertCircle class="h-3 w-3" />{errors['email']}</p>{/if}
 						</div>
 
 						<div>
-							<label for="dob" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-								<span class="flex items-center gap-1"><Calendar class="h-3.5 w-3.5" /> Date of Birth <span class="text-red-500">*</span></span>
-							</label>
-							<input id="dob" type="date" bind:value={form.dateOfBirth} class="w-full rounded-xl border px-4 py-2.5 {errors['dateOfBirth'] ? 'border-red-500 ring-2 ring-red-500/20' : 'border-gray-300 dark:border-gray-600'} dark:bg-gray-700 dark:text-white" />
+							<Label for="dob"><span class="flex items-center gap-1"><Calendar class="h-3.5 w-3.5" /> Date of Birth <span class="text-red-500">*</span></span></Label>
+							<Input id="dob" type="date" bind:value={form.dateOfBirth} variant={errors['dateOfBirth'] ? 'error' : 'default'} />
 							{#if errors['dateOfBirth']}<p class="mt-1 flex items-center gap-1 text-xs text-red-500"><AlertCircle class="h-3 w-3" />{errors['dateOfBirth']}</p>{/if}
 						</div>
 
@@ -366,12 +361,12 @@
 							<h4 class="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Emergency Contact</h4>
 							<div class="grid gap-4 sm:grid-cols-2">
 								<div>
-									<label for="emergencyContact" class="mb-1 block text-xs text-gray-500">Name</label>
-									<input id="emergencyContact" type="text" bind:value={form.emergencyContact} placeholder="Family member name" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+									<Label for="emergencyContact" class="text-xs">Name</Label>
+									<Input id="emergencyContact" type="text" bind:value={form.emergencyContact} placeholder="Family member name" class="h-9 text-sm" />
 								</div>
 								<div>
-									<label for="emergencyPhone" class="mb-1 block text-xs text-gray-500">Phone</label>
-									<input id="emergencyPhone" type="tel" bind:value={form.emergencyPhone} placeholder="+977-98XXXXXXXX" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+									<Label for="emergencyPhone" class="text-xs">Phone</Label>
+									<Input id="emergencyPhone" type="tel" bind:value={form.emergencyPhone} placeholder="+977-98XXXXXXXX" class="h-9 text-sm" />
 								</div>
 							</div>
 						</div>
@@ -384,57 +379,55 @@
 					<div class="space-y-5">
 						<div class="grid gap-4 sm:grid-cols-2">
 							<div>
-								<label for="vehicleType" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{$t('register.vehicleType')}</label>
-								<select id="vehicleType" bind:value={form.vehicleType} class="w-full rounded-xl border border-gray-300 px-4 py-2.5 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+								<Label for="vehicleType">{$t('register.vehicleType')}</Label>
+								<Select id="vehicleType" bind:value={form.vehicleType}>
 									<option value="auto-rickshaw">Auto Rickshaw (3-wheeler)</option>
 									<option value="e-rickshaw">E-Rickshaw</option>
 									<option value="tempo">Tempo</option>
-								</select>
+								</Select>
 							</div>
 							<div>
-								<label for="vehicleMake" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Make / Brand</label>
-								<input id="vehicleMake" type="text" bind:value={form.vehicleMake} placeholder="e.g. Bajaj, Piaggio" class="w-full rounded-xl border border-gray-300 px-4 py-2.5 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+								<Label for="vehicleMake">Make / Brand</Label>
+								<Input id="vehicleMake" type="text" bind:value={form.vehicleMake} placeholder="e.g. Bajaj, Piaggio" />
 							</div>
 						</div>
 
 						<div>
-							<label for="vehicleNumber" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{$t('register.vehicleNumber')} <span class="text-red-500">*</span></label>
-							<input id="vehicleNumber" type="text" bind:value={form.vehicleNumber} placeholder="Ba 1 Kha 1234" class="w-full rounded-xl border px-4 py-2.5 font-mono uppercase {errors['vehicleNumber'] ? 'border-red-500 ring-2 ring-red-500/20' : 'border-gray-300 dark:border-gray-600'} dark:bg-gray-700 dark:text-white" />
+							<Label for="vehicleNumber">{$t('register.vehicleNumber')} <span class="text-red-500">*</span></Label>
+							<Input id="vehicleNumber" type="text" bind:value={form.vehicleNumber} placeholder="Ba 1 Kha 1234" class="font-mono uppercase" variant={errors['vehicleNumber'] ? 'error' : 'default'} />
 							{#if errors['vehicleNumber']}<p class="mt-1 flex items-center gap-1 text-xs text-red-500"><AlertCircle class="h-3 w-3" />{errors['vehicleNumber']}</p>{/if}
 						</div>
 
 						<div class="grid gap-4 sm:grid-cols-3">
 							<div>
-								<label for="vehicleYear" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{$t('register.vehicleYear')} <span class="text-red-500">*</span></label>
-								<input id="vehicleYear" type="text" bind:value={form.vehicleYear} placeholder="2078 BS" class="w-full rounded-xl border px-4 py-2.5 {errors['vehicleYear'] ? 'border-red-500 ring-2 ring-red-500/20' : 'border-gray-300 dark:border-gray-600'} dark:bg-gray-700 dark:text-white" />
+								<Label for="vehicleYear">{$t('register.vehicleYear')} <span class="text-red-500">*</span></Label>
+								<Input id="vehicleYear" type="text" bind:value={form.vehicleYear} placeholder="2078 BS" variant={errors['vehicleYear'] ? 'error' : 'default'} />
 								{#if errors['vehicleYear']}<p class="mt-1 flex items-center gap-1 text-xs text-red-500"><AlertCircle class="h-3 w-3" />{errors['vehicleYear']}</p>{/if}
 							</div>
 							<div>
-								<label for="vehicleColor" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-									<span class="flex items-center gap-1"><Palette class="h-3.5 w-3.5" /> {$t('register.vehicleColor')} <span class="text-red-500">*</span></span>
-								</label>
-								<input id="vehicleColor" type="text" bind:value={form.vehicleColor} placeholder="Green" class="w-full rounded-xl border px-4 py-2.5 {errors['vehicleColor'] ? 'border-red-500 ring-2 ring-red-500/20' : 'border-gray-300 dark:border-gray-600'} dark:bg-gray-700 dark:text-white" />
+								<Label for="vehicleColor"><span class="flex items-center gap-1"><Palette class="h-3.5 w-3.5" /> {$t('register.vehicleColor')} <span class="text-red-500">*</span></span></Label>
+								<Input id="vehicleColor" type="text" bind:value={form.vehicleColor} placeholder="Green" variant={errors['vehicleColor'] ? 'error' : 'default'} />
 								{#if errors['vehicleColor']}<p class="mt-1 flex items-center gap-1 text-xs text-red-500"><AlertCircle class="h-3 w-3" />{errors['vehicleColor']}</p>{/if}
 							</div>
 							<div>
-								<label for="vehicleCapacity" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Passenger Capacity</label>
-								<select id="vehicleCapacity" bind:value={form.vehicleCapacity} class="w-full rounded-xl border border-gray-300 px-4 py-2.5 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+								<Label for="vehicleCapacity">Passenger Capacity</Label>
+								<Select id="vehicleCapacity" bind:value={form.vehicleCapacity}>
 									<option value="3">3 passengers</option>
 									<option value="4">4 passengers</option>
 									<option value="6">6 passengers</option>
-								</select>
+								</Select>
 							</div>
 						</div>
 
 						<div class="rounded-xl bg-gray-50 p-4 dark:bg-gray-700/50">
 							<label class="flex cursor-pointer items-center gap-3">
-								<input type="checkbox" bind:checked={form.hasInsurance} class="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand" />
+								<Checkbox bind:checked={form.hasInsurance} />
 								<span class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle has active insurance</span>
 							</label>
 							{#if form.hasInsurance}
 								<div class="mt-3">
-									<label for="insuranceExpiry" class="mb-1 block text-xs text-gray-500">Insurance Expiry Date</label>
-									<input id="insuranceExpiry" type="date" bind:value={form.insuranceExpiry} class="w-full rounded-lg border px-3 py-2 text-sm {errors['insuranceExpiry'] ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} dark:bg-gray-700 dark:text-white" />
+									<Label for="insuranceExpiry" class="text-xs">Insurance Expiry Date</Label>
+									<Input id="insuranceExpiry" type="date" bind:value={form.insuranceExpiry} variant={errors['insuranceExpiry'] ? 'error' : 'default'} class="h-9 text-sm" />
 									{#if errors['insuranceExpiry']}<p class="mt-1 text-xs text-red-500">{errors['insuranceExpiry']}</p>{/if}
 								</div>
 							{/if}
@@ -551,7 +544,7 @@
 						<!-- Terms -->
 						<div class="rounded-xl border {errors['tos'] ? 'border-red-400 bg-red-50 dark:border-red-600 dark:bg-red-900/10' : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'} p-4">
 							<label class="flex cursor-pointer items-start gap-3">
-								<input type="checkbox" bind:checked={agreeTos} class="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand" />
+								<Checkbox bind:checked={agreeTos} class="mt-0.5" />
 								<span class="text-sm text-gray-600 dark:text-gray-300">
 									I confirm that all information provided is accurate. I agree to MeroAuto's Terms of Service and Privacy Policy, and understand that my application will be reviewed within 48 hours.
 								</span>
