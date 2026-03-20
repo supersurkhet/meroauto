@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { validateRating, validateNonEmpty } from "./lib/validators";
 
 export const submitRating = mutation({
   args: {
@@ -10,7 +11,10 @@ export const submitRating = mutation({
     comment: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    if (args.rating < 1 || args.rating > 5) throw new Error("Rating must be 1-5");
+    validateRating(args.rating);
+    validateNonEmpty(args.fromUserId, "fromUserId");
+    validateNonEmpty(args.toUserId, "toUserId");
+    if (args.fromUserId === args.toUserId) throw new Error("Cannot rate yourself");
 
     // Check ride exists and is completed
     const ride = await ctx.db.get(args.rideId);

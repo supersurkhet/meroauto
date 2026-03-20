@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { validateCoordinates } from "./lib/validators";
 
 const EARTH_RADIUS_KM = 6371;
 function toRadians(deg: number) {
@@ -24,6 +25,7 @@ export const updateDriverLocation = mutation({
     speed: v.optional(v.number()),
   },
   handler: async (ctx, { driverId, latitude, longitude, heading, speed }) => {
+    validateCoordinates(latitude, longitude);
     const existing = await ctx.db
       .query("driverLocations")
       .withIndex("by_driverId", (q) => q.eq("driverId", driverId))

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { validateNonEmpty, validatePhone } from "./lib/validators";
 
 // ── Rider CRUD ──────────────────────────────────────────────────────
 
@@ -12,6 +13,10 @@ export const createRider = mutation({
     preferredLanguage: v.optional(v.union(v.literal("en"), v.literal("ne"))),
   },
   handler: async (ctx, args) => {
+    validateNonEmpty(args.userId, "userId");
+    validateNonEmpty(args.name, "name");
+    validatePhone(args.phone);
+
     const existing = await ctx.db
       .query("riders")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
@@ -80,6 +85,14 @@ export const createDriver = mutation({
     preferredLanguage: v.optional(v.union(v.literal("en"), v.literal("ne"))),
   },
   handler: async (ctx, args) => {
+    validateNonEmpty(args.userId, "userId");
+    validateNonEmpty(args.name, "name");
+    validatePhone(args.phone);
+    validateNonEmpty(args.licenseNumber, "licenseNumber");
+    if (args.licenseExpiry < Date.now()) {
+      throw new Error("License has expired");
+    }
+
     const existing = await ctx.db
       .query("drivers")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))

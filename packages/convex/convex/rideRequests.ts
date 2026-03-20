@@ -1,6 +1,12 @@
 import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
+import {
+  validateCoordinates,
+  validateNonEmpty,
+  validateFare,
+  validateDistance,
+} from "./lib/validators";
 
 const RIDE_REQUEST_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -19,6 +25,20 @@ export const createRideRequest = mutation({
     isPooling: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    // Validate inputs
+    validateCoordinates(args.pickupLatitude, args.pickupLongitude);
+    validateCoordinates(args.dropoffLatitude, args.dropoffLongitude);
+    validateNonEmpty(args.pickupAddress, "pickupAddress");
+    validateNonEmpty(args.dropoffAddress, "dropoffAddress");
+    validateFare(args.estimatedFare);
+    validateDistance(args.estimatedDistance);
+    if (args.estimatedDuration < 0) throw new Error("Duration cannot be negative");
+
+    // Verify rider exists
+    const rider = await ctx.db.get(args.riderId);
+    if (!rider) throw new Error("Rider not found");
+    if (!rider.isActive) throw new Error("Rider account is inactive");
+
     // Check for existing active request
     const existing = await ctx.db
       .query("rideRequests")

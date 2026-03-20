@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { validateCoordinates, validateFare, validateSurgeMultiplier } from "./lib/validators";
 
 const EARTH_RADIUS_KM = 6371;
 function toRadians(deg: number) {
@@ -58,6 +59,9 @@ export const estimateFare = query({
     dropoffLongitude: v.number(),
   },
   handler: async (ctx, args) => {
+    validateCoordinates(args.pickupLatitude, args.pickupLongitude);
+    validateCoordinates(args.dropoffLatitude, args.dropoffLongitude);
+
     const distance = haversineDistance(
       args.pickupLatitude,
       args.pickupLongitude,
@@ -163,6 +167,14 @@ export const createPricing = mutation({
     surgePriceMultiplier: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    validateFare(args.baseFare);
+    validateFare(args.minimumFare);
+    if (args.perKmRate < 0) throw new Error("Per km rate cannot be negative");
+    if (args.perMinuteRate < 0) throw new Error("Per minute rate cannot be negative");
+    if (args.surgePriceMultiplier !== undefined) {
+      validateSurgeMultiplier(args.surgePriceMultiplier);
+    }
+
     const now = Date.now();
     return await ctx.db.insert("pricing", {
       zoneId: args.zoneId,
@@ -185,7 +197,7 @@ export const setSurgeMultiplier = mutation({
     multiplier: v.number(),
   },
   handler: async (ctx, { zoneId, multiplier }) => {
-    if (multiplier < 1 || multiplier > 5) throw new Error("Surge must be 1x-5x");
+    validateSurgeMultiplier(multiplier);
 
     const pricingRules = zoneId
       ? await ctx.db

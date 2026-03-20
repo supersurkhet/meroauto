@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { validateNonEmpty, validateCapacity } from "./lib/validators";
 
 export const registerVehicle = mutation({
   args: {
@@ -10,6 +11,14 @@ export const registerVehicle = mutation({
     capacity: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    validateNonEmpty(args.registrationNumber, "registrationNumber");
+    validateNonEmpty(args.model, "model");
+    validateNonEmpty(args.color, "color");
+    if (args.capacity !== undefined) validateCapacity(args.capacity);
+
+    // Verify driver exists
+    const driver = await ctx.db.get(args.driverId);
+    if (!driver) throw new Error("Driver not found");
     // Check for duplicate registration
     const existing = await ctx.db
       .query("vehicles")
