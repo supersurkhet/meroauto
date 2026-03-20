@@ -31,6 +31,24 @@ Every agent MUST update this file with verification entries for every feature th
 - [x] `seedDefaults` mutation — seeds Surkhet zones + default pricing (seed.ts)
 - [x] `haversineDistance` utility — shared geo calculation (packages/shared/src/geo.ts)
 
+### Phase 2 — Enhanced Features
+- [x] `verifyOtp` mutation — checks 4-digit OTP before transitioning ride to in_progress (rides.ts)
+- [x] `autoExpireRequest` scheduled — auto-expires ride requests after 5min (rideRequests.ts)
+- [x] OTP generation — 4-digit OTP created when ride is accepted (rides.ts)
+- [x] `subscribeDriverLocation` query — optimized single-driver location for rider tracking (locations.ts)
+- [x] `subscribeActiveRides` query — all active rides with driver locations for admin map (locations.ts)
+- [x] `createQrRideRequest` mutation — QR scan → skip matching → create ride directly (qrCodes.ts)
+- [x] `getDriverStats` query — today's rides/earnings, vehicle, QR code (driverStats.ts)
+- [x] `getDriverEarnings` query — daily/weekly/monthly with chart data + payment breakdown (driverStats.ts)
+- [x] Load-balanced matching — prefers drivers with fewer rides today (matching.ts)
+- [x] Payment webhook HTTP routes — POST /payment/callback + /payment/khalti/verify (http.ts)
+- [x] `processSuccess` / `processFailed` internal mutations for webhook callbacks (paymentWebhook.ts)
+- [x] `savePushToken` mutation — upsert push notification token (pushTokens.ts)
+- [x] `getPushTokens` query — get all tokens for a user (pushTokens.ts)
+- [x] `removePushToken` mutation — remove token on logout (pushTokens.ts)
+- [x] `pushTokens` table added to schema with indexes (schema.ts)
+- [x] `otp` + `isQrRide` fields added to rides schema (schema.ts)
+
 ## Auth
 - [ ] Rider login — WorkOS redirect, returns to app authenticated
 - [ ] Rider signup — creates account, creates rider record in Convex
