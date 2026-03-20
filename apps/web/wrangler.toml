@@ -2,6 +2,9 @@ name = "meroauto-web"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+# The Cloudflare adapter outputs to .svelte-kit/cloudflare
+# with _worker.js as the entry point
+
 # Production
 [env.production]
 name = "meroauto-web"
@@ -13,6 +16,3 @@ routes = [
 # Preview / staging
 [env.preview]
 name = "meroauto-web-preview"
-
-[site]
-bucket = ".svelte-kit/cloudflare"
