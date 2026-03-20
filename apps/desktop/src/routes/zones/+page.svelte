@@ -20,8 +20,23 @@
     await new Promise((r) => setTimeout(r, 200));
     map = L.map(mapContainer).setView([28.601, 81.617], 13);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: '&copy; OSM', maxZoom: 19 }).addTo(map);
+    map.on("click", (e: any) => {
+      if (isAdding) {
+        newZone.centerLat = Math.round(e.latlng.lat * 10000) / 10000;
+        newZone.centerLng = Math.round(e.latlng.lng * 10000) / 10000;
+        renderPreview();
+      }
+    });
     renderZones();
   });
+
+  let previewCircle: any = null;
+  function renderPreview() {
+    if (!map || !L || !isAdding) return;
+    if (previewCircle) previewCircle.remove();
+    previewCircle = L.circle([newZone.centerLat, newZone.centerLng], { radius: newZone.radiusKm * 1000, color: "#3b82f6", fillColor: "#3b82f6", fillOpacity: 0.15, weight: 2, dashArray: "6 4" }).addTo(map);
+  }
+  $effect(() => { if (isAdding) { void newZone.centerLat; void newZone.centerLng; void newZone.radiusKm; renderPreview(); } else if (previewCircle) { previewCircle.remove(); previewCircle = null; } });
 
   function renderZones() {
     if (!map || !L) return;
@@ -55,9 +70,9 @@
           <h3 class="text-sm font-semibold">{$t("zones.addZone")}</h3>
           <div><label class="text-xs text-muted-foreground">{$t("zones.name")}</label><input bind:value={newZone.name} class="w-full rounded-md border bg-background px-3 py-1.5 text-sm mt-1 outline-none focus:ring-2 focus:ring-ring" /></div>
           <div><label class="text-xs text-muted-foreground">{$t("zones.nameNe")}</label><input bind:value={newZone.nameNe} class="w-full rounded-md border bg-background px-3 py-1.5 text-sm mt-1 outline-none focus:ring-2 focus:ring-ring" /></div>
-          <div class="grid grid-cols-2 gap-2">
-            <div><label class="text-xs text-muted-foreground">Latitude</label><input type="number" step="0.001" bind:value={newZone.centerLat} class="w-full rounded-md border bg-background px-3 py-1.5 text-sm mt-1 outline-none focus:ring-2 focus:ring-ring" /></div>
-            <div><label class="text-xs text-muted-foreground">Longitude</label><input type="number" step="0.001" bind:value={newZone.centerLng} class="w-full rounded-md border bg-background px-3 py-1.5 text-sm mt-1 outline-none focus:ring-2 focus:ring-ring" /></div>
+          <div class="rounded-md border border-dashed border-blue-400 bg-blue-50/50 dark:bg-blue-900/10 p-2 text-center">
+            <p class="text-xs font-medium text-blue-600 dark:text-blue-400">Click on the map to set zone center</p>
+            <p class="text-[11px] text-muted-foreground mt-0.5">{newZone.centerLat.toFixed(4)}, {newZone.centerLng.toFixed(4)}</p>
           </div>
           <div><label class="text-xs text-muted-foreground">{$t("zones.radius")}</label><input type="number" step="0.5" bind:value={newZone.radiusKm} class="w-full rounded-md border bg-background px-3 py-1.5 text-sm mt-1 outline-none focus:ring-2 focus:ring-ring" /></div>
           <div class="grid grid-cols-3 gap-2">

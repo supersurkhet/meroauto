@@ -14,6 +14,34 @@
 	const initLast = data.user?.lastName || '';
 	const initEmail = data.user?.email || '';
 
+	let addressMapEl: HTMLDivElement;
+	let addressMap: any;
+	let addressMarker: any;
+
+	function initAddressMap() {
+		if (addressMap || !addressMapEl) return;
+		import('leaflet').then((L) => {
+			const link = document.createElement('link');
+			link.rel = 'stylesheet'; link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+			document.head.appendChild(link);
+			setTimeout(() => {
+				addressMap = L.map(addressMapEl).setView([28.601, 81.617], 14);
+				L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM', maxZoom: 19 }).addTo(addressMap);
+				addressMarker = L.marker([28.601, 81.617], { draggable: true }).addTo(addressMap);
+				addressMarker.on('dragend', () => {
+					const pos = addressMarker.getLatLng();
+					form.address = `${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)} (Surkhet)`;
+				});
+				addressMap.on('click', (e: any) => {
+					addressMarker.setLatLng(e.latlng);
+					form.address = `${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)} (Surkhet)`;
+				});
+			}, 200);
+		});
+	}
+
+	$effect(() => { if (currentStep === 1) setTimeout(initAddressMap, 100); });
+
 	let form = $state({
 		firstName: initFirst,
 		lastName: initLast,
@@ -325,7 +353,12 @@
 							<label for="address" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
 								<span class="flex items-center gap-1"><MapPin class="h-3.5 w-3.5" /> {$t('register.address')} <span class="text-red-500">*</span></span>
 							</label>
-							<input id="address" type="text" bind:value={form.address} class="w-full rounded-xl border px-4 py-2.5 {errors['address'] ? 'border-red-500 ring-2 ring-red-500/20' : 'border-gray-300 dark:border-gray-600'} dark:bg-gray-700 dark:text-white" />
+							<div class="rounded-xl border overflow-hidden {errors['address'] ? 'border-red-500 ring-2 ring-red-500/20' : 'border-gray-300 dark:border-gray-600'}" style="height: 180px;">
+								<div bind:this={addressMapEl} class="h-full w-full"></div>
+							</div>
+							<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+								{form.address ? `📍 ${form.address}` : 'Click on map or drag pin to set your address'}
+							</p>
 							{#if errors['address']}<p class="mt-1 flex items-center gap-1 text-xs text-red-500"><AlertCircle class="h-3 w-3" />{errors['address']}</p>{/if}
 						</div>
 

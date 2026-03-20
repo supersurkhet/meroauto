@@ -76,6 +76,17 @@ function BookingScreenInner() {
     );
   };
 
+  const handleMapLongPress = (e: any) => {
+    const { latitude, longitude } = e.nativeEvent.coordinate;
+    const customPlace = {
+      id: 'custom',
+      name: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+      lat: latitude,
+      lng: longitude,
+    };
+    handleSelectPlace(customPlace);
+  };
+
   const handleConfirm = () => {
     if (!selectedDropoff || !fareEstimate) return;
     router.push({
@@ -114,6 +125,7 @@ function BookingScreenInner() {
         }}
         showsUserLocation
         userInterfaceStyle={isDark ? 'dark' : 'light'}
+        onLongPress={handleMapLongPress}
       >
         {selectedDropoff && (
           <>
