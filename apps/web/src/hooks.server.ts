@@ -1,6 +1,11 @@
 import type { Handle } from '@sveltejs/kit';
+import { deserializeSession } from '$lib/server/auth';
 
 export const handle: Handle = async ({ event, resolve }) => {
+	// Parse session from cookie
+	const sessionCookie = event.cookies.get('meroauto_session');
+	event.locals.user = sessionCookie ? deserializeSession(sessionCookie) : null;
+
 	const response = await resolve(event, {
 		preload: ({ type }) => type === 'css' || type === 'js' || type === 'font'
 	});
@@ -18,10 +23,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 			"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
 			"font-src 'self' https://fonts.gstatic.com",
 			"img-src 'self' data: blob: https://*.tile.openstreetmap.org https://unpkg.com",
-			"connect-src 'self' https://*.convex.cloud wss://*.convex.cloud",
+			"connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://api.workos.com",
 			"frame-ancestors 'none'",
 			"base-uri 'self'",
-			"form-action 'self'"
+			"form-action 'self' https://authkit.workos.com"
 		].join('; ')
 	);
 

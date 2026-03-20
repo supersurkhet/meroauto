@@ -1,17 +1,24 @@
 <script lang="ts">
 	import { t } from '$i18n';
-	import { User, Car, FileText, CheckCircle, Upload, ArrowLeft, ArrowRight, AlertCircle, X, Image, Phone, Mail, MapPin, Calendar, Palette } from 'lucide-svelte';
+	import { User, Car, FileText, CheckCircle, Upload, ArrowLeft, ArrowRight, AlertCircle, X, Image, Phone, Mail, MapPin, Calendar, Palette, LogIn, LogOut, Shield } from 'lucide-svelte';
+
+	let { data } = $props();
 
 	let currentStep = $state(1);
 	let submitted = $state(false);
 	let errors = $state<Record<string, string>>({});
 	let agreeTos = $state(false);
 
+	const user = $derived(data.user);
+	const initFirst = data.user?.firstName || '';
+	const initLast = data.user?.lastName || '';
+	const initEmail = data.user?.email || '';
+
 	let form = $state({
-		firstName: '',
-		lastName: '',
+		firstName: initFirst,
+		lastName: initLast,
 		phone: '',
-		email: '',
+		email: initEmail,
 		address: '',
 		city: 'Surkhet',
 		dateOfBirth: '',
@@ -183,6 +190,40 @@
 			<h1 class="text-4xl font-bold text-gray-900 sm:text-5xl dark:text-white">{$t('register.title')}</h1>
 			<p class="mt-3 text-lg text-gray-500 dark:text-gray-400">{$t('register.subtitle')}</p>
 		</div>
+
+		<!-- Auth banner -->
+		{#if user}
+			<div class="mt-6 flex items-center justify-between rounded-xl border border-brand-200 bg-brand-50 px-5 py-3 dark:border-brand-800 dark:bg-brand-900/20">
+				<div class="flex items-center gap-3">
+					{#if user.profilePictureUrl}
+						<img src={user.profilePictureUrl} alt="" class="h-8 w-8 rounded-full" />
+					{:else}
+						<div class="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">
+							{(user.firstName?.[0] || user.email[0]).toUpperCase()}
+						</div>
+					{/if}
+					<div>
+						<p class="text-sm font-medium text-gray-900 dark:text-white">{user.firstName ? `${user.firstName} ${user.lastName || ''}` : user.email}</p>
+						<p class="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+					</div>
+				</div>
+				<a href="/auth/logout" class="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+					<LogOut class="h-3 w-3" />
+					Sign out
+				</a>
+			</div>
+		{:else}
+			<div class="mt-6 rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
+				<Shield class="mx-auto mb-3 h-8 w-8 text-brand" />
+				<h3 class="text-lg font-semibold text-gray-900 dark:text-white">Sign in to register as a driver</h3>
+				<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Create an account or sign in to save your progress and verify your identity.</p>
+				<a href="/auth/login?returnTo=/register" class="mt-4 inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand/20 transition-all hover:-translate-y-0.5 hover:bg-brand-dark">
+					<LogIn class="h-4 w-4" />
+					Sign in with WorkOS
+				</a>
+				<p class="mt-3 text-xs text-gray-400">Or continue without signing in below</p>
+			</div>
+		{/if}
 
 		{#if submitted}
 			<div class="mt-12 rounded-2xl border border-brand-200 bg-brand-50 p-12 text-center dark:border-brand-800 dark:bg-brand-900/20">
