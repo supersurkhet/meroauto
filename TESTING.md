@@ -49,6 +49,22 @@ Every agent MUST update this file with verification entries for every feature th
 - [x] `pushTokens` table added to schema with indexes (schema.ts)
 - [x] `otp` + `isQrRide` fields added to rides schema (schema.ts)
 
+### Phase 3 — Integration & Polish
+- [x] Khalti payment verification — POST /api/payments/khalti/callback with API lookup (http.ts)
+- [x] eSewa payment verification — POST /api/payments/esewa/callback with HMAC-SHA256 (http.ts)
+- [x] Fonepay payment verification — POST /api/payments/fonepay/callback with HMAC-SHA512 DV (http.ts)
+- [x] `findPoolableRides` query — finds rides within 1km pickup + 2km dropoff (pooling.ts)
+- [x] `joinPooledRide` mutation — adds rider to pool with 30% discount (pooling.ts)
+- [x] `getPoolRiders` query — all riders in a pooled ride (pooling.ts)
+- [x] `poolRiders` table added to schema (schema.ts)
+- [x] `getOnlineDriverCount` query — lightweight online driver count (locations.ts)
+- [x] `getDriverLocationHistory` query — current location + recent rides (locations.ts)
+- [x] Cron: expire stale ride requests every 1 minute (crons.ts)
+- [x] Cron: offline stale drivers (no update in 2min) every 5 minutes (crons.ts)
+- [x] Data validation: coordinates, phone (Nepal format), ratings, fares, distances (lib/validators.ts)
+- [x] Authorization: verify rider/driver exists before mutations (rideRequests.ts, vehicles.ts)
+- [x] Input validation on all key mutations (users, rideRequests, ratings, vehicles, locations, pricing)
+
 ## Auth
 - [ ] Rider login — WorkOS redirect, returns to app authenticated
 - [ ] Rider signup — creates account, creates rider record in Convex
