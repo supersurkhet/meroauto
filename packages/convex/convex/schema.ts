@@ -56,7 +56,9 @@ export default defineSchema({
     heading: v.optional(v.number()),
     speed: v.optional(v.number()),
     updatedAt: v.number(),
-  }).index("by_driverId", ["driverId"]),
+  })
+    .index("by_driverId", ["driverId"])
+    .index("by_updatedAt", ["updatedAt"]),
 
   rideRequests: defineTable({
     riderId: v.id("riders"),
@@ -84,7 +86,8 @@ export default defineSchema({
   })
     .index("by_riderId", ["riderId"])
     .index("by_status", ["status"])
-    .index("by_matchedDriverId", ["matchedDriverId"]),
+    .index("by_matchedDriverId", ["matchedDriverId"])
+    .index("by_createdAt", ["createdAt"]),
 
   rides: defineTable({
     requestId: v.id("rideRequests"),
@@ -143,7 +146,8 @@ export default defineSchema({
   })
     .index("by_rideId", ["rideId"])
     .index("by_riderId", ["riderId"])
-    .index("by_driverId", ["driverId"]),
+    .index("by_driverId", ["driverId"])
+    .index("by_status", ["status"]),
 
   ratings: defineTable({
     rideId: v.id("rides"),
@@ -176,7 +180,9 @@ export default defineSchema({
     isActive: v.boolean(),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_zoneId", ["zoneId"]),
+  })
+    .index("by_zoneId", ["zoneId"])
+    .index("by_isActive", ["isActive"]),
 
   zones: defineTable({
     name: v.string(),
@@ -186,7 +192,9 @@ export default defineSchema({
     radiusKm: v.number(),
     isActive: v.boolean(),
     createdAt: v.number(),
-  }).index("by_name", ["name"]),
+  })
+    .index("by_name", ["name"])
+    .index("by_isActive", ["isActive"]),
 
   poolRiders: defineTable({
     rideId: v.id("rides"),

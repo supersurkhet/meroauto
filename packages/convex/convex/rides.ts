@@ -16,6 +16,9 @@ export const acceptRideRequest = mutation({
 
     const driver = await ctx.db.get(request.matchedDriverId);
     if (!driver) throw new Error("Driver not found");
+    if (!driver.isOnline) throw new Error("Driver went offline");
+    if (driver.isSuspended) throw new Error("Driver has been suspended");
+    if (!driver.isApproved) throw new Error("Driver is not approved");
 
     // Get driver's active vehicle
     const vehicle = await ctx.db
@@ -124,22 +127,40 @@ export const completeRide = mutation({
       distance: finalDistance ?? ride.distance,
     });
 
+    const actualFare = finalFare ?? ride.fare;
+
     // Update driver stats
     const driver = await ctx.db.get(ride.driverId);
     if (driver) {
-      const fare = finalFare ?? ride.fare;
       await ctx.db.patch(driver._id, {
         totalRides: driver.totalRides + 1,
-        totalEarnings: driver.totalEarnings + fare,
+        totalEarnings: driver.totalEarnings + actualFare,
+        isOnline: true, // Driver goes back to available after completing
       });
     }
 
-    // Update rider stats (if we had a totalRides field — schema doesn't have it, skip)
+    // If no payment record yet, create a pending one
+    const existingPayment = await ctx.db
+      .query("payments")
+      .withIndex("by_rideId", (q) => q.eq("rideId", rideId))
+      .first();
+    if (!existingPayment) {
+      await ctx.db.insert("payments", {
+        rideId,
+        riderId: ride.riderId,
+        driverId: ride.driverId,
+        amount: actualFare,
+        method: "cash", // Default to cash if not specified
+        status: "pending",
+        createdAt: now,
+      });
+    }
+
     return rideId;
   },
 });
 
-/** Cancel a ride */
+/** Cancel a ride — handles edge cases like driver going offline */
 export const cancelRide = mutation({
   args: {
     rideId: v.id("rides"),
@@ -157,6 +178,27 @@ export const cancelRide = mutation({
       cancelledAt: Date.now(),
       cancelReason: reason,
     });
+
+    // Release driver — set back to online if not suspended
+    const driver = await ctx.db.get(ride.driverId);
+    if (driver && !driver.isSuspended && driver.isApproved) {
+      // Only keep online if they still have a recent location update (< 2min)
+      const loc = await ctx.db
+        .query("driverLocations")
+        .withIndex("by_driverId", (q) => q.eq("driverId", ride.driverId))
+        .unique();
+      const isRecent = loc && (Date.now() - loc.updatedAt) < 2 * 60 * 1000;
+      await ctx.db.patch(driver._id, { isOnline: isRecent ?? false });
+    }
+
+    // Handle pending payment — mark as failed if exists
+    const payment = await ctx.db
+      .query("payments")
+      .withIndex("by_rideId", (q) => q.eq("rideId", rideId))
+      .first();
+    if (payment && payment.status === "pending") {
+      await ctx.db.patch(payment._id, { status: "failed" });
+    }
 
     return rideId;
   },

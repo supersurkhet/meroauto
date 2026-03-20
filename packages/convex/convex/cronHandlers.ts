@@ -26,6 +26,13 @@ export const expireStaleRequests = internalMutation({
 
     let expired = 0;
     for (const request of [...staleRequests, ...staleMatched]) {
+      // Release matched driver if any
+      if (request.matchedDriverId) {
+        const driver = await ctx.db.get(request.matchedDriverId);
+        if (driver && !driver.isSuspended) {
+          // Driver stays online, just freed from this match
+        }
+      }
       await ctx.db.patch(request._id, { status: "expired" });
       expired++;
     }
@@ -56,7 +63,25 @@ export const offlineStaleDrivers = internalMutation({
         .unique();
 
       if (!loc || loc.updatedAt < cutoff) {
-        // No location or stale — mark offline
+        // Check if driver has an active ride — don't offline mid-ride
+        const activeRide = await ctx.db
+          .query("rides")
+          .withIndex("by_driverId", (q) => q.eq("driverId", driver._id))
+          .filter((q) =>
+            q.or(
+              q.eq(q.field("status"), "driver_arriving"),
+              q.eq(q.field("status"), "driver_arrived"),
+              q.eq(q.field("status"), "in_progress"),
+            ),
+          )
+          .first();
+
+        if (activeRide) {
+          // Driver has active ride but no location — leave online but skip cleanup
+          continue;
+        }
+
+        // No location or stale, no active ride — mark offline
         await ctx.db.patch(driver._id, { isOnline: false });
 
         // Remove stale location doc

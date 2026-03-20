@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { validateFare } from "./lib/validators";
 
 export const createPayment = mutation({
   args: {
@@ -15,6 +16,15 @@ export const createPayment = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    validateFare(args.amount);
+
+    // Verify ride exists and is in completable state
+    const ride = await ctx.db.get(args.rideId);
+    if (!ride) throw new Error("Ride not found");
+    if (ride.status !== "completed" && ride.status !== "in_progress") {
+      throw new Error("Can only create payment for active or completed rides");
+    }
+
     // Check for existing payment
     const existing = await ctx.db
       .query("payments")
