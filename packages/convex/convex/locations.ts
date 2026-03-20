@@ -123,6 +123,86 @@ export const getAllDriverLocations = query({
   },
 });
 
+/** Subscribe to a single driver's location — optimized for rider live tracking */
+export const subscribeDriverLocation = query({
+  args: { driverId: v.id("drivers") },
+  handler: async (ctx, { driverId }) => {
+    const loc = await ctx.db
+      .query("driverLocations")
+      .withIndex("by_driverId", (q) => q.eq("driverId", driverId))
+      .unique();
+    if (!loc) return null;
+    return {
+      latitude: loc.latitude,
+      longitude: loc.longitude,
+      heading: loc.heading,
+      speed: loc.speed,
+      updatedAt: loc.updatedAt,
+    };
+  },
+});
+
+/** Subscribe to all active rides with driver locations — for admin dashboard */
+export const subscribeActiveRides = query({
+  args: {},
+  handler: async (ctx) => {
+    const activeRides = await ctx.db
+      .query("rides")
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("status"), "driver_arriving"),
+          q.eq(q.field("status"), "driver_arrived"),
+          q.eq(q.field("status"), "in_progress"),
+        ),
+      )
+      .collect();
+
+    const enriched = [];
+    for (const ride of activeRides) {
+      const rider = await ctx.db.get(ride.riderId);
+      const driver = await ctx.db.get(ride.driverId);
+      const vehicle = await ctx.db.get(ride.vehicleId);
+      const loc = await ctx.db
+        .query("driverLocations")
+        .withIndex("by_driverId", (q) => q.eq("driverId", ride.driverId))
+        .unique();
+
+      enriched.push({
+        _id: ride._id,
+        status: ride.status,
+        pickup: {
+          latitude: ride.pickupLatitude,
+          longitude: ride.pickupLongitude,
+          address: ride.pickupAddress,
+        },
+        dropoff: {
+          latitude: ride.dropoffLatitude,
+          longitude: ride.dropoffLongitude,
+          address: ride.dropoffAddress,
+        },
+        fare: ride.fare,
+        createdAt: ride.createdAt,
+        startedAt: ride.startedAt,
+        riderName: rider?.name ?? "Unknown",
+        driverName: driver?.name ?? "Unknown",
+        driverPhone: driver?.phone,
+        vehicleRegistration: vehicle?.registrationNumber,
+        vehicleColor: vehicle?.color,
+        driverLocation: loc
+          ? {
+              latitude: loc.latitude,
+              longitude: loc.longitude,
+              heading: loc.heading,
+              updatedAt: loc.updatedAt,
+            }
+          : null,
+      });
+    }
+
+    return enriched;
+  },
+});
+
 /** Remove driver location (when going offline) */
 export const removeDriverLocation = mutation({
   args: { driverId: v.id("drivers") },
