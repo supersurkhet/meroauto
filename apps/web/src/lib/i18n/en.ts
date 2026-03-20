@@ -159,6 +159,7 @@ export default {
 		featureSecureDesc: 'End-to-end encrypted rides. Your data stays on your device.',
 		featureRated: 'Top Rated',
 		featureRatedDesc: '4.7★ average rating from 5,000+ riders in Surkhet.',
-		sysReq: 'System Requirements'
+		sysReq: 'System Requirements',
+		free: 'Free'
 	}
 };
