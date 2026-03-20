@@ -43,15 +43,15 @@
 					<form onsubmit={handleSubmit} class="space-y-5">
 						<div>
 							<Label for="name">{$t('contact.name')}</Label>
-							<Input id="name" type="text" value={name} oninput={(e) => { name = e.currentTarget.value; }} required />
+							<Input id="name" type="text" bind:value={name} required />
 						</div>
 						<div>
 							<Label for="email">{$t('contact.email')}</Label>
-							<Input id="email" type="email" value={email} oninput={(e) => { email = e.currentTarget.value; }} required />
+							<Input id="email" type="email" bind:value={email} required />
 						</div>
 						<div>
 							<Label for="message">{$t('contact.message')}</Label>
-							<Textarea id="message" value={message} oninput={(e) => { message = e.currentTarget.value; }} required rows={5} />
+							<Textarea id="message" bind:value={message} required rows={5} />
 						</div>
 						<button type="submit" class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3 font-semibold text-white transition-colors hover:bg-brand-dark">
 							<Send class="h-4 w-4" />
