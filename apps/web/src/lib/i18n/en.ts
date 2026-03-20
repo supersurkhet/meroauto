@@ -6,7 +6,8 @@ export default {
 		about: 'About Us',
 		contact: 'Contact',
 		register: 'Drive With Us',
-		coverage: 'Coverage'
+		coverage: 'Coverage',
+		download: 'Download'
 	},
 	hero: {
 		title: 'Your Auto Rickshaw,',
