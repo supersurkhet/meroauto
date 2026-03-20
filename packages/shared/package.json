@@ -8,5 +8,8 @@
     "build": "tsc",
     "lint": "biome check .",
     "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
   }
 }

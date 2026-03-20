@@ -184,6 +184,9 @@
     },
     "packages/shared": {
       "name": "@meroauto/shared",
+      "devDependencies": {
+        "typescript": "^5.9.3",
+      },
     },
     "packages/ui": {
       "name": "@meroauto/ui",

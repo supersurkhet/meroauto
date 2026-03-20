@@ -2,6 +2,7 @@
 	import { t } from '$i18n';
 	import { Mail, Phone, MapPin, Send } from 'lucide-svelte';
 	import { browser } from '$app/environment';
+	import { Input, Textarea, Label } from '$lib/components/ui';
 
 	let name = $state('');
 	let email = $state('');
@@ -41,16 +42,16 @@
 				{:else}
 					<form onsubmit={handleSubmit} class="space-y-5">
 						<div>
-							<label for="name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{$t('contact.name')}</label>
-							<input id="name" type="text" bind:value={name} required class="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-brand focus:ring-2 focus:ring-brand/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+							<Label for="name">{$t('contact.name')}</Label>
+							<Input id="name" type="text" value={name} oninput={(e) => { name = e.currentTarget.value; }} required />
 						</div>
 						<div>
-							<label for="email" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{$t('contact.email')}</label>
-							<input id="email" type="email" bind:value={email} required class="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-brand focus:ring-2 focus:ring-brand/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+							<Label for="email">{$t('contact.email')}</Label>
+							<Input id="email" type="email" value={email} oninput={(e) => { email = e.currentTarget.value; }} required />
 						</div>
 						<div>
-							<label for="message" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{$t('contact.message')}</label>
-							<textarea id="message" bind:value={message} required rows={5} class="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-brand focus:ring-2 focus:ring-brand/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white"></textarea>
+							<Label for="message">{$t('contact.message')}</Label>
+							<Textarea id="message" value={message} oninput={(e) => { message = e.currentTarget.value; }} required rows={5} />
 						</div>
 						<button type="submit" class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3 font-semibold text-white transition-colors hover:bg-brand-dark">
 							<Send class="h-4 w-4" />

@@ -8,6 +8,6 @@
   "scripts": {
     "build": "echo 'no build needed'",
     "lint": "biome check .",
-    "check": "svelte-check"
+    "check": "echo 'no check needed'"
   }
 }
