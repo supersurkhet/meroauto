@@ -4,11 +4,10 @@ import { env } from '$env/dynamic/private';
 const workos = new WorkOS(env.WORKOS_API_KEY || '');
 
 const clientId = env.WORKOS_CLIENT_ID || '';
-const redirectUri = env.WORKOS_REDIRECT_URI || 'https://meroauto-web.pages.dev/auth/callback';
+export { workos, clientId };
 
-export { workos, clientId, redirectUri };
-
-export function getAuthorizationUrl(state?: string): string {
+export function getAuthorizationUrl(origin: string, state?: string): string {
+	const redirectUri = env.WORKOS_REDIRECT_URI || `${origin}/auth/callback`;
 	return workos.userManagement.getAuthorizationUrl({
 		provider: 'authkit',
 		clientId,

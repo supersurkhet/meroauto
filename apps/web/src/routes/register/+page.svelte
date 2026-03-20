@@ -219,7 +219,7 @@
 				<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Create an account or sign in to save your progress and verify your identity.</p>
 				<a href="/auth/login?returnTo=/register" class="mt-4 inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand/20 transition-all hover:-translate-y-0.5 hover:bg-brand-dark">
 					<LogIn class="h-4 w-4" />
-					Sign in with WorkOS
+					Sign In
 				</a>
 				<p class="mt-3 text-xs text-gray-400">Or continue without signing in below</p>
 			</div>
