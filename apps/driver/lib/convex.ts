@@ -1,7 +1,9 @@
 import { ConvexReactClient } from "convex/react";
-import { ConvexProviderWithAuth } from "convex/react";
 
-const CONVEX_URL = process.env.EXPO_PUBLIC_CONVEX_URL ?? "https://placeholder.convex.cloud";
+if (!process.env.EXPO_PUBLIC_CONVEX_URL) {
+  console.warn("EXPO_PUBLIC_CONVEX_URL not set — Convex queries will fail");
+}
+
+const CONVEX_URL = process.env.EXPO_PUBLIC_CONVEX_URL!;
 
 export const convex = new ConvexReactClient(CONVEX_URL);
-export { ConvexProviderWithAuth };

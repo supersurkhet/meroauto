@@ -1,15 +1,5 @@
 import { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Pressable,
-} from 'react-native';
-import { Link } from 'expo-router';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/providers/theme';
 import { useAuth } from '../../lib/providers/auth';
@@ -22,16 +12,14 @@ export default function LoginScreen() {
   const { colors } = useTheme();
   const { login } = useAuth();
   const { t } = useTranslation();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   async function handleLogin() {
-    if (!email || !password) return;
     setLoading(true);
     try {
-      await login(email, password);
+      await login();
+    } catch (e: any) {
+      Alert.alert('Login Failed', e.message ?? 'Please try again');
     } finally {
       setLoading(false);
     }
@@ -39,132 +27,71 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.flex}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Logo area */}
-          <View style={styles.logoArea}>
-            <View style={[styles.logoCircle, { backgroundColor: colors.primary }]}>
-              <Ionicons name="car-sport" size={40} color="#FFFFFF" />
-            </View>
-            <Text style={[Typography.h1, { color: colors.text, marginTop: 20 }]}>
-              {t('auth.welcome')}
-            </Text>
-            <Text
-              style={[
-                Typography.body,
-                { color: colors.textSecondary, marginTop: 8, textAlign: 'center' },
-              ]}
-            >
-              {t('auth.welcomeSub')}
-            </Text>
+      <View style={styles.container}>
+        {/* Logo */}
+        <View style={styles.logoArea}>
+          <View style={[styles.logoCircle, { backgroundColor: colors.primary }]}>
+            <Ionicons name="car-sport" size={48} color="#FFFFFF" />
           </View>
+          <Text style={[Typography.h1, { color: colors.text, marginTop: 24 }]}>
+            {t('auth.welcome')}
+          </Text>
+          <Text
+            style={[
+              Typography.body,
+              { color: colors.textSecondary, marginTop: 8, textAlign: 'center' },
+            ]}
+          >
+            {t('auth.welcomeSub')}
+          </Text>
+        </View>
 
-          {/* Form */}
-          <View style={styles.form}>
-            <Text style={[Typography.label, { color: colors.textSecondary, marginBottom: 6 }]}>
-              {t('auth.email')}
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  color: colors.text,
-                },
-              ]}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="driver@meroauto.com"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-            />
+        {/* Auth button */}
+        <View style={styles.authSection}>
+          <Button
+            title={t('auth.login')}
+            onPress={handleLogin}
+            loading={loading}
+            fullWidth
+            size="lg"
+            icon={<Ionicons name="shield-checkmark" size={20} color="#FFFFFF" />}
+          />
 
-            <Text
-              style={[
-                Typography.label,
-                { color: colors.textSecondary, marginBottom: 6, marginTop: 16 },
-              ]}
-            >
-              {t('auth.password')}
-            </Text>
-            <View style={styles.passwordRow}>
-              <TextInput
-                style={[
-                  styles.input,
-                  styles.passwordInput,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  },
-                ]}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="********"
-                placeholderTextColor={colors.textMuted}
-                secureTextEntry={!showPassword}
-                autoComplete="password"
-              />
-              <Pressable
-                style={styles.eyeBtn}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <Ionicons
-                  name={showPassword ? 'eye-off' : 'eye'}
-                  size={20}
-                  color={colors.textMuted}
-                />
-              </Pressable>
-            </View>
+          <Text
+            style={[
+              Typography.caption,
+              { color: colors.textMuted, marginTop: 16, textAlign: 'center', lineHeight: 18 },
+            ]}
+          >
+            Secure authentication powered by WorkOS AuthKit.{'\n'}
+            Sign in or create an account automatically.
+          </Text>
+        </View>
 
-            <Pressable style={styles.forgotBtn}>
-              <Text style={[Typography.bodySmall, { color: colors.primary }]}>
-                {t('auth.forgotPassword')}
+        {/* Features */}
+        <View style={styles.features}>
+          {[
+            { icon: 'cash-outline' as const, text: 'Earn on your schedule' },
+            { icon: 'location-outline' as const, text: 'GPS-based ride matching' },
+            { icon: 'qr-code-outline' as const, text: 'Instant QR rides' },
+          ].map((item) => (
+            <View key={item.text} style={styles.featureRow}>
+              <Ionicons name={item.icon} size={20} color={colors.primary} />
+              <Text style={[Typography.bodySmall, { color: colors.textSecondary, marginLeft: 12 }]}>
+                {item.text}
               </Text>
-            </Pressable>
-
-            <Button
-              title={t('auth.login')}
-              onPress={handleLogin}
-              loading={loading}
-              fullWidth
-              size="lg"
-              style={{ marginTop: 24 }}
-            />
-
-            <View style={styles.signupRow}>
-              <Text style={[Typography.bodySmall, { color: colors.textSecondary }]}>
-                {t('auth.noAccount')}{' '}
-              </Text>
-              <Link href="/(auth)/signup" asChild>
-                <Pressable>
-                  <Text style={[Typography.label, { color: colors.primary }]}>
-                    {t('auth.signup')}
-                  </Text>
-                </Pressable>
-              </Link>
             </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          ))}
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  flex: { flex: 1 },
-  scroll: {
-    flexGrow: 1,
+  container: {
+    flex: 1,
     paddingHorizontal: 24,
     justifyContent: 'center',
   },
@@ -173,38 +100,20 @@ const styles = StyleSheet.create({
     marginBottom: 48,
   },
   logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
+    width: 96,
+    height: 96,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  form: {},
-  input: {
-    height: 52,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    fontSize: 16,
+  authSection: {
+    marginBottom: 48,
   },
-  passwordRow: {
-    position: 'relative',
+  features: {
+    gap: 16,
   },
-  passwordInput: {
-    paddingRight: 48,
-  },
-  eyeBtn: {
-    position: 'absolute',
-    right: 14,
-    top: 16,
-  },
-  forgotBtn: {
-    alignSelf: 'flex-end',
-    marginTop: 8,
-  },
-  signupRow: {
+  featureRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 24,
+    alignItems: 'center',
   },
 });

@@ -19,8 +19,12 @@
 export const API = {
   drivers: {
     myProfile: "drivers:myProfile" as any,
+    register: "drivers:register" as any,
     updateStatus: "drivers:updateStatus" as any,
     getEarnings: "drivers:getEarnings" as any,
+  },
+  users: {
+    me: "users:me" as any,
   },
   rides: {
     acceptRequest: "rides:acceptRequest" as any,

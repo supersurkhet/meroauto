@@ -1,25 +1,40 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
 
-type User = {
+WebBrowser.maybeCompleteAuthSession();
+
+const WORKOS_CLIENT_ID = process.env.EXPO_PUBLIC_WORKOS_CLIENT_ID ?? '';
+const WORKOS_REDIRECT_URI = AuthSession.makeRedirectUri({ scheme: 'meroauto-driver' });
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3001';
+const TOKEN_KEY = 'meroauto_driver_token';
+const USER_KEY = 'meroauto_driver_user';
+
+export type User = {
   id: string;
   email: string;
+  firstName?: string;
+  lastName?: string;
   name: string;
-  role: 'driver';
+  phone?: string;
   avatar?: string;
+  role: 'driver';
 };
 
 type AuthContextType = {
   user: User | null;
+  token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
+  login: () => Promise<void>;
+  signup: () => Promise<void>;
   logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  token: null,
   isLoading: true,
   isAuthenticated: false,
   login: async () => {},
@@ -27,58 +42,75 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
 });
 
-const TOKEN_KEY = 'meroauto_driver_token';
-const USER_KEY = 'meroauto_driver_user';
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadStoredSession();
+    loadStoredAuth();
   }, []);
 
-  async function loadStoredSession() {
+  async function loadStoredAuth() {
     try {
+      const storedToken = await SecureStore.getItemAsync(TOKEN_KEY);
       const storedUser = await SecureStore.getItemAsync(USER_KEY);
-      if (storedUser) {
+      if (storedToken && storedUser) {
+        setToken(storedToken);
         setUser(JSON.parse(storedUser));
       }
     } catch {
-      // No stored session
+      // Token expired or invalid
     } finally {
       setIsLoading(false);
     }
   }
 
-  async function login(email: string, _password: string) {
-    // TODO: Replace with actual WorkOS AuthKit flow
-    const mockUser: User = {
-      id: 'driver_' + Date.now(),
-      email,
-      name: email.split('@')[0],
-      role: 'driver',
-    };
-    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(mockUser));
-    await SecureStore.setItemAsync(TOKEN_KEY, 'mock_token_' + Date.now());
-    setUser(mockUser);
+  async function login() {
+    const authUrl = `https://api.workos.com/user_management/authorize?client_id=${WORKOS_CLIENT_ID}&redirect_uri=${encodeURIComponent(WORKOS_REDIRECT_URI)}&response_type=code&provider=authkit&state=driver_login`;
+
+    const result = await WebBrowser.openAuthSessionAsync(authUrl, WORKOS_REDIRECT_URI);
+
+    if (result.type === 'success' && result.url) {
+      const url = new URL(result.url);
+      const code = url.searchParams.get('code');
+      if (code) {
+        await exchangeCode(code);
+      }
+    }
   }
 
-  async function signup(email: string, _password: string, name: string) {
-    const mockUser: User = {
-      id: 'driver_' + Date.now(),
-      email,
-      name,
+  async function signup() {
+    // WorkOS handles signup vs login via the same OAuth flow
+    return login();
+  }
+
+  async function exchangeCode(code: string) {
+    const response = await fetch(`${API_URL}/auth/callback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, redirectUri: WORKOS_REDIRECT_URI, role: 'driver' }),
+    });
+
+    if (!response.ok) throw new Error('Auth exchange failed');
+
+    const data = await response.json();
+    const authUser: User = {
+      ...data.user,
+      name: `${data.user.firstName ?? ''} ${data.user.lastName ?? ''}`.trim() || data.user.email,
       role: 'driver',
     };
-    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(mockUser));
-    await SecureStore.setItemAsync(TOKEN_KEY, 'mock_token_' + Date.now());
-    setUser(mockUser);
+
+    await SecureStore.setItemAsync(TOKEN_KEY, data.accessToken);
+    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(authUser));
+    setToken(data.accessToken);
+    setUser(authUser);
   }
 
   async function logout() {
-    await SecureStore.deleteItemAsync(USER_KEY);
     await SecureStore.deleteItemAsync(TOKEN_KEY);
+    await SecureStore.deleteItemAsync(USER_KEY);
+    setToken(null);
     setUser(null);
   }
 
@@ -86,8 +118,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        token,
         isLoading,
-        isAuthenticated: !!user,
+        isAuthenticated: !!user && !!token,
         login,
         signup,
         logout,
