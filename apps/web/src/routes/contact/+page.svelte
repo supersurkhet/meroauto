@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { t } from '$i18n';
 	import { Mail, Phone, MapPin, Send } from 'lucide-svelte';
+	import { browser } from '$app/environment';
 
 	let name = $state('');
 	let email = $state('');
@@ -77,15 +78,25 @@
 					</div>
 				{/each}
 
-				<!-- Map placeholder -->
+				<!-- Office Location Map -->
 				<div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
-					<div class="flex h-64 items-center justify-center bg-gray-100 dark:bg-gray-800">
-						<div class="text-center">
-							<MapPin class="mx-auto mb-2 h-8 w-8 text-brand" />
-							<p class="font-medium text-gray-600 dark:text-gray-300">Birendranagar, Surkhet</p>
-							<p class="text-sm text-gray-400">28.6083° N, 81.6368° E</p>
+					{#if browser}
+						{#await import('$components/LeafletMap.svelte') then LeafletMap}
+							<LeafletMap.default
+								center={[28.6083, 81.6368]}
+								zoom={15}
+								height="264px"
+								locations={[{ name: 'MeroAuto Office', coords: [28.6083, 81.6368] as [number, number], type: 'hub', description: 'Birendranagar, Surkhet' }]}
+							/>
+						{/await}
+					{:else}
+						<div class="flex h-64 items-center justify-center bg-gray-100 dark:bg-gray-800">
+							<div class="text-center">
+								<MapPin class="mx-auto mb-2 h-8 w-8 text-brand" />
+								<p class="font-medium text-gray-600 dark:text-gray-300">Birendranagar, Surkhet</p>
+							</div>
 						</div>
-					</div>
+					{/if}
 				</div>
 			</div>
 		</div>
