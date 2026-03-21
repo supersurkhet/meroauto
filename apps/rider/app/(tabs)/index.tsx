@@ -24,6 +24,12 @@ import { Card } from '@/components/ui/Card';
 import { HomeCardSkeleton } from '@/components/ui/Skeleton';
 import { ScreenErrorBoundary } from '@/components/ErrorBoundary';
 
+type NearbyDriver = {
+  driverId: string;
+  latitude: number;
+  longitude: number;
+};
+
 function HomeScreenInner() {
   const { c, isDark } = useTheme();
   const { t } = useTranslation();
@@ -85,7 +91,7 @@ function HomeScreenInner() {
     ).start();
   }, []);
 
-  const drivers = nearbyDrivers ?? [];
+  const drivers: NearbyDriver[] = nearbyDrivers ?? [];
 
   return (
     <View style={[styles.container, { backgroundColor: c.background }]}>

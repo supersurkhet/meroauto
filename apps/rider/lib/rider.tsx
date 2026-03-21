@@ -1,10 +1,9 @@
 import React, { createContext, useContext } from 'react';
 import { useQuery, useMutation, api } from './convex';
 import { useAuth } from './auth';
-import type { Id } from 'convex/values';
 
 type RiderProfile = {
-  _id: any; // Id<"riders">
+  _id: string;
   userId: string;
   name: string;
   phone: string;
@@ -17,7 +16,7 @@ type RiderProfile = {
 
 type RiderContextType = {
   rider: RiderProfile | null | undefined;
-  riderId: any | null; // Id<"riders">
+  riderId: string | null;
   isLoading: boolean;
 };
 

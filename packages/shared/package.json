@@ -1,15 +1,15 @@
 {
-  "name": "@meroauto/shared",
-  "private": true,
-  "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
-  "scripts": {
-    "build": "tsc",
-    "lint": "biome check .",
-    "check": "tsc --noEmit"
-  },
-  "devDependencies": {
-    "typescript": "^5.9.3"
-  }
+	"name": "@meroauto/shared",
+	"private": true,
+	"type": "module",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"scripts": {
+		"build": "tsc",
+		"lint": "biome check .",
+		"check": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"typescript": "^5.9.3"
+	}
 }

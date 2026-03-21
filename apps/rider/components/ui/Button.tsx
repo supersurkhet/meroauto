@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
+  type StyleProp,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -20,8 +21,8 @@ type Props = {
   disabled?: boolean;
   loading?: boolean;
   icon?: React.ReactNode;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
   fullWidth?: boolean;
 };
 
@@ -39,7 +40,7 @@ export function Button({
 }: Props) {
   const { c } = useTheme();
 
-  const containerStyles: ViewStyle[] = [
+  const containerStyles: StyleProp<ViewStyle> = [
     styles.base,
     sizes[size],
     fullWidth && styles.fullWidth,
@@ -59,7 +60,7 @@ export function Button({
     style,
   ];
 
-  const textStyles: TextStyle[] = [
+  const textStyles: StyleProp<TextStyle> = [
     styles.text,
     textSizes[size],
     {
