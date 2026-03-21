@@ -9,13 +9,27 @@
   import { currentUser, isAuthenticated, authLoading, fetchUser, signOut } from "$lib/stores/auth";
   import { USE_CONVEX } from "$lib/convex";
 
+  const THEME_STORAGE_KEY = "desktop-theme";
+
   let { children } = $props();
 
   let sidebarCollapsed = $state(false);
   let darkMode = $state(false);
+  let themeReady = $state(false);
+
+  function applyTheme(isDark: boolean) {
+    document.documentElement.classList.toggle("dark", isDark);
+    document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+  }
 
   // Auth check on mount
   onMount(async () => {
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    darkMode = savedTheme ? savedTheme === "dark" : prefersDark;
+    applyTheme(darkMode);
+    themeReady = true;
+
     if (USE_CONVEX) {
       await fetchUser();
     } else {
@@ -23,6 +37,12 @@
       isAuthenticated.set(true);
       authLoading.set(false);
     }
+  });
+
+  $effect(() => {
+    if (!themeReady) return;
+    applyTheme(darkMode);
+    localStorage.setItem(THEME_STORAGE_KEY, darkMode ? "dark" : "light");
   });
 
   // Auth gate: redirect to login if not authenticated (skip auth routes)
@@ -35,7 +55,6 @@
 
   function toggleDark() {
     darkMode = !darkMode;
-    document.documentElement.classList.toggle("dark", darkMode);
   }
 
   function toggleLocale() {
