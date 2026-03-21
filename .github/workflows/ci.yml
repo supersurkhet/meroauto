@@ -41,7 +41,9 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run build
 
-      - name: Deploy to Cloudflare Workers
+      - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: apps/web
+          command: pages deploy .svelte-kit/cloudflare --project-name=meroauto-web
