@@ -1,4 +1,3 @@
-import { WorkOS } from '@workos-inc/node';
 import { env } from '$env/dynamic/private';
 
 function getClientId(): string {
@@ -10,17 +9,18 @@ function getClientId(): string {
 	return clientId
 }
 
-function getWorkOS(): WorkOS {
+async function getWorkOS() {
 	const apiKey = env.WORKOS_API_KEY;
 	if (!apiKey) {
 		throw new Error('WORKOS_API_KEY is required for WorkOS authentication')
 	}
 
+	const { WorkOS } = await import('@workos-inc/node');
 	return new WorkOS(apiKey)
 }
 
-export function getAuthorizationUrl(origin: string, state?: string): string {
-	const workos = getWorkOS();
+export async function getAuthorizationUrl(origin: string, state?: string): Promise<string> {
+	const workos = await getWorkOS();
 	const clientId = getClientId();
 	const redirectUri = env.WORKOS_REDIRECT_URI || `${origin}/auth/callback`;
 	return workos.userManagement.getAuthorizationUrl({
@@ -32,7 +32,7 @@ export function getAuthorizationUrl(origin: string, state?: string): string {
 }
 
 export async function authenticateWithCode(code: string) {
-	const workos = getWorkOS();
+	const workos = await getWorkOS();
 	const clientId = getClientId();
 	return workos.userManagement.authenticateWithCode({
 		code,
@@ -41,7 +41,7 @@ export async function authenticateWithCode(code: string) {
 }
 
 export async function getUser(userId: string) {
-	return getWorkOS().userManagement.getUser(userId);
+	return (await getWorkOS()).userManagement.getUser(userId);
 }
 
 export interface SessionUser {
